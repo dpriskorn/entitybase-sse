@@ -1,7 +1,7 @@
 {
-  "name": "kafka-sse",
+  "name": "entitybase-sse",
   "version": "0.4.3",
-  "description": "KafkaSSE - Kafka Consumer to HTTP SSE/EventSource",
+  "description": "Entitybase-SSE - Kafka/Redpanda Consumer to HTTP SSE/EventSource",
   "main": "index.js",
   "scripts": {
     "start": "./server.js | ./node_modules/bunyan/bin/bunyan",
@@ -14,10 +14,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/wikimedia/KafkaSSE.git"
+    "url": "https://github.com/entitybase/entitybase-sse.git"
   },
   "keywords": [
     "kafka",
+    "redpanda",
     "http",
     "sse",
     "eventsource",
@@ -26,9 +27,9 @@
   "author": "Andrew Otto <otto@wikimedia.org>",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/wikimedia/KafkaSSE/issues"
+    "url": "https://github.com/entitybase/entitybase-sse/issues"
   },
-  "homepage": "https://github.com/wikimedia/KafkaSSE#readme",
+  "homepage": "https://github.com/entitybase/entitybase-sse#readme",
   "dependencies": {
     "bluebird": "^3.5.1",
     "bunyan": "^1.8.1",
