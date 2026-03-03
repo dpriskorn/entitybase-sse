@@ -83,7 +83,7 @@ Requires Redpanda/Kafka at `localhost:9092`.
 
 ## Author
 
-- [Dennis Priskorn](https://github.com/dpriskorn)
+- [Nizo Priskorn](https://github.com/dpriskorn)
 - Based on [KafkaSSE](https://github.com/wikimedia/KafkaSSE) by Wikimedia Foundation engineers
 
 ## License
