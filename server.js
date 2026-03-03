@@ -7,6 +7,7 @@ const path = require('path');
 const yaml = require('yaml');
 const { Kafka } = require('kafkajs');
 const kafkaSseHandler = require('./index');
+const log = require('./lib/logger');
 
 const port = 8081;
 const kafkaBroker = process.env.KAFKA_BROKERS || 'localhost:9092';
@@ -41,6 +42,7 @@ const swaggerHtml = `<!DOCTYPE html>
 </html>`;
 
 async function listTopics() {
+    log.debug('Fetching topic metadata from Kafka...');
     const kafka = new Kafka({
         clientId: 'kafkasse-admin',
         brokers: kafkaBroker.split(',').map(b => b.trim())
@@ -49,7 +51,9 @@ async function listTopics() {
     await admin.connect();
     const metadata = await admin.fetchTopicMetadata();
     await admin.disconnect();
-    return metadata.map(t => t.name);
+    const topics = metadata.map(t => t.name);
+    log.debug({ topics }, 'Fetched topics from Kafka');
+    return topics;
 }
 
 function buildStreamSpec(topics) {
@@ -127,6 +131,7 @@ class KafkaSSEServer {
             if (url.startsWith('/v1/stream/')) {
                 const streamPath = url.replace('/v1/stream/', '');
                 const topics = streamPath.split(',');
+                log.info({ topics, url }, 'Handling SSE request');
                 const options = {
                     kafkaConfig: { 'metadata.broker.list': kafkaBroker },
                     useTimestampForId: true
@@ -135,16 +140,9 @@ class KafkaSSEServer {
                 return;
             }
 
-            const splitUrl = url.replace('/', '').split("?timestamp=");
-            const topics = splitUrl[0].split(',');
-            const options = {
-                kafkaConfig: { 'metadata.broker.list': kafkaBroker },
-                useTimestampForId: true
-            }
-
-            let atTimestamp = splitUrl.length > 1 ? Number(splitUrl[1]) : undefined;
-
-            kafkaSseHandler(req, res, topics, options, atTimestamp);
+            log.warn({ url }, 'Unhandled route, returning 404');
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Not found' }));
         });
     }
 
