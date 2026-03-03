@@ -152,7 +152,7 @@ make release  # Creates release vYYYY.M.D, commits and tags
 | `make backend-shell` | Open shell in container |
 | `make frontend-dev` | Run frontend dev server on port 8082 |
 | `make frontend-build` | Build frontend for production |
-| `make frontend-serve` | Serve built frontend on port 8082 |
+| `make frontend-serve` | Build and serve frontend on port 8082 |
 | `make frontend-test-run` | Run frontend tests |
 | `make release` | Create release |
 
