@@ -53,7 +53,8 @@ build:
 	docker build -t $(IMAGE_NAME) .
 
 run:
-	docker run -d \
+	@make check
+	@docker run -d \
 		--name $(CONTAINER_NAME) \
 		--network host \
 		-e KAFKA_BROKERS=$(KAFKA_BROKERS) \
@@ -73,9 +74,11 @@ coverage:
 	docker run --rm --network host -e KAFKA_BROKERS=$(KAFKA_BROKERS) -e LOG_LEVEL=$(LOG_LEVEL) $(IMAGE_NAME) npm run coverage
 
 test-docker:
+	@make check
 	LOG_LEVEL=debug ./test/docker-tests.sh
 
 coverage-docker:
+	@make check
 	LOG_LEVEL=debug ./test/docker-tests.sh coverage
 
 shell:
