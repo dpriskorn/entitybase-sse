@@ -32,7 +32,7 @@ help:
 
 check:
 	@echo "Checking if Redpanda is running..."
-	@docker ps --format '{{.Names}}\t{{.Status}}' | grep -q redpanda && echo "✅ Redpanda is running" || (echo "❌ Redpanda is not running" && echo "Start with: docker run -d --name redpanda -p 9092:9092 docker.redpanda.com/redpandadata/redpanda:v25.3.6" && exit 1)
+	@docker ps --format '{{.Names}}\t{{.Status}}' | grep -q redpanda && echo "✅ Redpanda is running" || (echo "❌ Redpanda is not running" && echo "Start Redpanda: cd ../entitybase-backend && make api" && exit 1)
 
 test-local:
 	@echo "Installing dependencies..."
