@@ -1,4 +1,4 @@
-.PHONY: help build run test test-local test:unit test-docker coverage stop clean shell logs docs
+.PHONY: help build run test test-local test-unit test-docker coverage stop clean shell logs docs
 
 IMAGE_NAME=kafkasse
 CONTAINER_NAME=kafkasse
@@ -10,7 +10,7 @@ help:
 	@echo ""
 	@echo "Local targets (no Docker/Kafka required):"
 	@echo "  make test-local   - Install deps and run all tests locally"
-	@echo "  make test:unit   - Run unit tests only (no Kafka needed)"
+	@echo "  make test-unit   - Run unit tests only (no Kafka needed)"
 	@echo ""
 	@echo "Docker targets (requires Docker):"
 	@echo "  make build        - Build Docker image"
@@ -34,7 +34,7 @@ test-local:
 	@echo "Running all tests..."
 	npm test
 
-test:unit:
+test-unit:
 	@echo "Installing dependencies..."
 	npm install
 	@echo "Running unit tests (no Kafka required)..."
