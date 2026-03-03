@@ -1,0 +1,52 @@
+.PHONY: help build run test test-docker stop clean shell logs
+
+IMAGE_NAME=kafkasse
+CONTAINER_NAME=kafkasse
+PORT=8081
+KAFKA_BROKERS?=localhost:9092
+
+help:
+	@echo "KafkaSSE Docker Makefile"
+	@echo ""
+	@echo "Targets:"
+	@echo "  make build        - Build Docker image"
+	@echo "  make run          - Run container (requires redpanda at localhost:9092)"
+	@echo "  make test         - Run tests inside container"
+	@echo "  make test-docker  - Run docker-compose tests (kafka in docker)"
+	@echo "  make shell        - Open shell in running container"
+	@echo "  make logs         - View container logs"
+	@echo "  make stop         - Stop running container"
+	@echo "  make clean        - Remove container and image"
+	@echo ""
+	@echo "Environment variables:"
+	@echo "  KAFKA_BROKERS     - Kafka broker address (default: localhost:9092)"
+
+build:
+	docker build -t $(IMAGE_NAME) .
+
+run:
+	docker run -d \
+		--name $(CONTAINER_NAME) \
+		--network host \
+		-e KAFKA_BROKERS=$(KAFKA_BROKERS) \
+		-p $(PORT):$(PORT) \
+		$(IMAGE_NAME)
+
+test:
+	docker run --rm --network host $(IMAGE_NAME) npm test
+
+test-docker:
+	./test/docker-tests.sh
+
+shell:
+	docker exec -it $(CONTAINER_NAME) /bin/sh
+
+logs:
+	docker logs -f $(CONTAINER_NAME)
+
+stop:
+	docker stop $(CONTAINER_NAME) 2>/dev/null || true
+
+clean: stop
+	docker rm $(CONTAINER_NAME) 2>/dev/null || true
+	docker rmi $(IMAGE_NAME) 2>/dev/null || true

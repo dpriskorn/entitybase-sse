@@ -1,0 +1,70 @@
+openapi: 3.0.3
+info:
+  title: KafkaSSE API
+  description: Kafka Consumer to HTTP SSE/EventSource. Streams JSON messages from Kafka topics to clients over HTTP in SSE format.
+  version: 0.4.3
+servers:
+  - url: http://localhost:8081
+    description: Local development server
+paths:
+  /{topics}:
+    get:
+      summary: Stream Kafka messages as SSE
+      description: |
+        Connects to Kafka and streams messages from the specified topics as Server-Sent Events.
+        Uses Last-Event-ID header for automatic resume on reconnection.
+      operationId: streamTopics
+      parameters:
+        - name: topics
+          in: path
+          required: true
+          description: Comma-separated list of Kafka topics
+          schema:
+            type: string
+          example: wikibase.entity_change,wikibase.entity_diff
+        - name: timestamp
+          in: query
+          required: false
+          description: Start streaming from this timestamp (milliseconds since epoch)
+          schema:
+            type: integer
+          example: 1704067200000
+      responses:
+        '200':
+          description: SSE stream of Kafka messages
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                example: |
+                  id: [{"topic":"wikibase.entity_change","partition":0,"offset":123}]
+                  data: {"entityId":"Q123","event":"modify"}
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+  /:
+    get:
+      summary: Redirect to API documentation
+      responses:
+        '302':
+          description: Redirect to /docs
+          headers:
+            Location:
+              schema:
+                type: string
+              example: /docs

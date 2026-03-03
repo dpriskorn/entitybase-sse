@@ -34,25 +34,27 @@
     "url": "https://github.com/wikimedia/KafkaSSE/issues"
   },
   "homepage": "https://github.com/wikimedia/KafkaSSE#readme",
-  "dependencies": {
+"dependencies": {
     "bluebird": "^3.5.1",
     "bunyan": "^1.8.1",
     "lodash": "^4.15.0",
     "node-rdkafka": "^2.3.4",
     "safe-regex": "^1.1.0",
-    "uuid": "^3.3.2"
+    "swagger-ui-express": "^5.0.0",
+    "uuid": "^3.3.2",
+    "yaml": "^2.0.0"
   },
   "devDependencies": {
+    "coveralls": "^2.11.11",
+    "eventsource": "^0.2.1",
     "istanbul": "^0.4.4",
     "jscs": "^3.0.7",
     "mocha": "^2.5.3",
     "mocha-jscs": "^5.0.1",
     "mocha-jshint": "^2.3.1",
-    "coveralls": "^2.11.11",
     "mocha-lcov-reporter": "^1.2.0",
-    "nsp": "^2.6.1",
-    "eventsource": "^0.2.1",
     "node-fetch": "^1.6.3",
+    "nsp": "^2.6.1",
     "sinon": "^1.17.6"
   }
 }
