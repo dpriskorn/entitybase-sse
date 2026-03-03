@@ -62,12 +62,14 @@ function httpRequestAsync(port, path) {
 function sseRequestAsync(port, path) {
     return new Promise((resolve, reject) => {
         const es = new EventSource(`http://localhost:${port}/${path}`);
+        currentEventSource = es;
         const messages = [];
         es.onmessage = (event) => {
             messages.push(event.data);
         };
         es.onerror = (err) => {
             es.close();
+            currentEventSource = null;
             resolve(messages);
         };
     });
@@ -75,8 +77,13 @@ function sseRequestAsync(port, path) {
 
 describe('SSEResponse', () => {
     let server;
+    let currentEventSource;
 
     afterEach(() => {
+        if (currentEventSource) {
+            currentEventSource.close();
+            currentEventSource = null;
+        }
         if (server) {
             server.close();
             server = null;
