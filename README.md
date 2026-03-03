@@ -196,6 +196,8 @@ make run
 
 The server will be available at `http://localhost:8081` with API docs at `http://localhost:8081/docs`.
 
+> **Note:** If running remotely, ensure your firewall allows port 8081 (e.g., `sudo ufw allow 8081/tcp`).
+
 ## Testing
 
 ### On host
