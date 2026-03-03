@@ -5,9 +5,9 @@
   "main": "index.js",
   "scripts": {
     "start": "./server.js | ./node_modules/bunyan/bin/bunyan",
-    "test": "jest",
+    "test": "jest --verbose --forceExit",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
+    "test:coverage": "jest --coverage --forceExit",
     "redpanda-fixture": "./test/utils/redpanda_fixture.sh",
     "test-docker": "./test/docker-tests.sh"
   },
@@ -48,6 +48,7 @@
     "testEnvironment": "node",
     "testMatch": ["**/test/**/*.test.js"],
     "collectCoverageFrom": ["lib/**/*.js"],
-    "coverageDirectory": "coverage"
+    "coverageDirectory": "coverage",
+    "forceExit": true
   }
 }
