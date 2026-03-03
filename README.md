@@ -81,6 +81,11 @@ Requires Redpanda/Kafka at `localhost:9092`.
 - `KAFKA_BROKERS` - Broker address (default: `localhost:9092`)
 - `LOG_LEVEL` - trace, debug, info, warn, error (default: `warn`)
 
+## Author
+
+- [Dennis Priskorn](https://github.com/dpriskorn)
+- Based on [KafkaSSE](https://github.com/wikimedia/KafkaSSE) by Wikimedia Foundation engineers
+
 ## Thanks
 
-Entitybase-SSE is based on [KafkaSSE](https://github.com/wikimedia/KafkaSSE) by the fantastic engineers at the [Wikimedia Foundation (WMF)](https://www.wikimedia.org/).
+Thanks to the fantastic engineers at the [Wikimedia Foundation (WMF)](https://www.wikimedia.org/) for creating KafkaSSE!
