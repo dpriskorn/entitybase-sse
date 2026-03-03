@@ -79,7 +79,7 @@ class KafkaSSEServer {
     }
 
     listen() {
-        this.server.listen(port);
+        this.server.listen(port, '0.0.0.0');
         console.log(`Listening for HTTP SSE connections on port ${port}`);
         console.log(`API docs available at http://localhost:${port}/docs`);
     }
