@@ -11,7 +11,7 @@ help:
 	@echo "Targets:"
 	@echo "  make build        - Build Docker image"
 	@echo "  make run          - Run container (requires redpanda at localhost:9092)"
-	@echo "  make test         - Run tests inside container"
+	@echo "  make test         - Run tests (requires Kafka at KAFKA_BROKERS, default localhost:9092)"
 	@echo "  make test-docker  - Run docker-compose tests (kafka in docker)"
 	@echo "  make shell        - Open shell in running container"
 	@echo "  make logs         - View container logs"
@@ -37,7 +37,10 @@ run:
 		$(IMAGE_NAME)
 
 test:
-	docker run --rm --network host $(IMAGE_NAME) npm test
+	@echo "Running tests requires Kafka broker at KAFKA_BROKERS"
+	@echo "Make sure Kafka/Redpanda is running at localhost:9092 or set KAFKA_BROKERS"
+	@echo "Or use 'make test-docker' to run tests with Kafka in Docker"
+	docker run --rm --network host -e KAFKA_BROKERS=$(KAFKA_BROKERS) $(IMAGE_NAME) npm test
 
 test-docker:
 	./test/docker-tests.sh
