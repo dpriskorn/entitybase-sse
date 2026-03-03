@@ -32,8 +32,7 @@ const swaggerHtml = `<!DOCTYPE html>
                 presets: [
                     SwaggerUIBundle.presets.apis,
                     SwaggerUIBundle.SwaggerUIStandalonePreset
-                ],
-                layout: 'StandaloneLayout'
+                ]
             });
         };
     </script>
