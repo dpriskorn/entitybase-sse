@@ -50,9 +50,11 @@ docs:
 	./scripts/generate-diagrams.sh
 
 build:
+	@make stop || true
 	docker build -t $(IMAGE_NAME) .
 
 run:
+	@make stop || true
 	@make check || exit 1
 	@make build || exit 1
 	@docker run -d \
