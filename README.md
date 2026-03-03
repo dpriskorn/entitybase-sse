@@ -55,11 +55,14 @@ curl -N http://localhost:8081/v1/stream/your-topic
 # Install dependencies
 make frontend-install
 
-# Run dev server (with hot reload)
+# Run dev server (with hot reload) on port 8082
 make frontend-dev
 
 # Build for production
 make frontend-build
+
+# Serve built frontend on port 8082
+make frontend-serve
 ```
 
 For remote servers, replace `localhost` with your server IP.
@@ -147,8 +150,9 @@ make release  # Creates release vYYYY.M.D, commits and tags
 | `make backend-test-docker` | Run integration tests |
 | `make backend-logs` | View container logs |
 | `make backend-shell` | Open shell in container |
-| `make frontend-dev` | Run frontend dev server |
+| `make frontend-dev` | Run frontend dev server on port 8082 |
 | `make frontend-build` | Build frontend for production |
+| `make frontend-serve` | Serve built frontend on port 8082 |
 | `make frontend-test-run` | Run frontend tests |
 | `make release` | Create release |
 

@@ -10,8 +10,9 @@ help:
 	@echo ""
 	@echo "Frontend targets:"
 	@echo "  make frontend-install     - Install frontend dependencies"
-	@echo "  make frontend-dev         - Run frontend dev server (with hot reload)"
+	@echo "  make frontend-dev         - Run frontend dev server on port 8082"
 	@echo "  make frontend-build       - Build frontend for production"
+	@echo "  make frontend-serve       - Serve built frontend on port 8082"
 	@echo "  make frontend-preview     - Preview built frontend"
 	@echo "  make frontend-test-run    - Run frontend tests"
 	@echo "  make frontend-test        - Run frontend tests with UI"
@@ -59,6 +60,9 @@ frontend-build:
 
 frontend-preview:
 	cd frontend && npm run preview
+
+frontend-serve:
+	cd frontend && npm run serve
 
 frontend-test-run:
 	cd frontend && npm run test:run
