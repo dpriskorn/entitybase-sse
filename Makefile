@@ -13,7 +13,8 @@ help:
 	@echo "  make run          - Run container (requires redpanda at localhost:9092)"
 	@echo "  make test         - Run tests (requires Kafka at KAFKA_BROKERS)"
 	@echo "  make test-docker  - Run docker-compose tests (kafka in docker)"
-	@echo "  make coverage     - Run tests with coverage (requires Kafka at KAFKA_BROKERS)"
+	@echo "  make coverage      - Run tests with coverage (requires Kafka at KAFKA_BROKERS)"
+	@echo "  make coverage-docker - Run docker-compose tests with coverage"
 	@echo "  make shell        - Open shell in running container"
 	@echo "  make logs         - View container logs"
 	@echo "  make stop         - Stop running container"
@@ -50,6 +51,9 @@ coverage:
 
 test-docker:
 	./test/docker-tests.sh
+
+coverage-docker:
+	./test/docker-tests.sh coverage
 
 shell:
 	docker exec -it $(CONTAINER_NAME) /bin/sh

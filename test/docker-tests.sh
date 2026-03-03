@@ -6,6 +6,7 @@ APP_NAME="testkafkasse"
 DOCKER_COMPOSE_CMD="docker-compose -p ${APP_NAME}"
 IMAGE_NAME="testkafkasse"
 REDPANDA_CONTAINER="${APP_NAME}-redpanda-1"
+TEST_TYPE="${1:-test}"
 
 cleanup() {
     echo "Cleaning up..."
@@ -40,11 +41,17 @@ echo "Fixtures loaded!"
 echo "Running tests..."
 docker build -t "${IMAGE_NAME}" . 2>&1
 
+if [ "$TEST_TYPE" = "coverage" ]; then
+    TEST_CMD="npm run coverage"
+else
+    TEST_CMD="npx mocha test/*.js -R spec --timeout 10000"
+fi
+
 docker run --rm \
     --net "${APP_NAME}_${APP_NETWORK}" \
     -e KAFKA_BROKERS=redpanda:9092 \
     -e UV_THREADPOOL_SIZE=128 \
     ${IMAGE_NAME} \
-    npx mocha test/*.js -R spec --timeout 10000 2>&1
+    ${TEST_CMD} 2>&1
 
 echo "Done!"
