@@ -53,14 +53,18 @@ build:
 	docker build -t $(IMAGE_NAME) .
 
 run:
-	@make check
+	@make check || exit 1
 	@docker run -d \
 		--name $(CONTAINER_NAME) \
 		--network host \
 		-e KAFKA_BROKERS=$(KAFKA_BROKERS) \
 		-e LOG_LEVEL=$(LOG_LEVEL) \
 		-p $(PORT):$(PORT) \
-		$(IMAGE_NAME)
+		$(IMAGE_NAME) 2>&1 | grep -v "WARNING" || true
+	@echo ""
+	@echo "✅ KafkaSSE server running"
+	@echo "   - Server: http://localhost:$(PORT)"
+	@echo "   - Docs:   http://localhost:$(PORT)/docs"
 
 test:
 	@echo "Running tests requires Kafka broker at KAFKA_BROKERS"
@@ -74,11 +78,13 @@ coverage:
 	docker run --rm --network host -e KAFKA_BROKERS=$(KAFKA_BROKERS) -e LOG_LEVEL=$(LOG_LEVEL) $(IMAGE_NAME) npm run coverage
 
 test-docker:
-	@make check
+	@make check || exit 1
+	@echo "Running integration tests with Redpanda..."
 	LOG_LEVEL=debug ./test/docker-tests.sh
 
 coverage-docker:
-	@make check
+	@make check || exit 1
+	@echo "Running integration tests with coverage..."
 	LOG_LEVEL=debug ./test/docker-tests.sh coverage
 
 shell:
