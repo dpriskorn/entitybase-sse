@@ -1,0 +1,112 @@
+@startuml
+!theme plain
+
+package "KafkaSSE" {
+    [index.js] --> [KafkaSSE]
+}
+
+package "lib/" {
+    [KafkaSSE] --> [SSEResponse]
+    [KafkaSSE] --> [MessageHandler]
+    [KafkaSSE] --> [KafkaConsumerManager]
+    [KafkaSSE] --> [Errors]
+
+    [KafkaConsumerManager] --> [kafkajs]
+
+    [MessageHandler] --> [SSEResponse]
+    [MessageHandler] --> [Errors]
+
+    [KafkaConsumerManager] --> [Assignments]
+}
+
+package "lib/kafka/" {
+    [Assignments] --> [kafkajs]
+}
+
+package "lib/sse/" {
+    [MessageHandler]
+}
+
+node "HTTP Client" {
+    [Browser] -down-> [KafkaSSE]
+}
+
+node "KafkaSSE Server" {
+    [KafkaSSE]
+}
+
+node "Kafka Cluster" {
+    [Broker 1] as B1
+    [Broker 2] as B2
+    [Broker N] as BN
+}
+
+[Browser] -right-> [KafkaSSE]: HTTP SSE\n/topics
+[KafkaSSE] -right-> B1: Kafka Protocol
+[KafkaSSE] -right-> B2: Kafka Protocol
+[KafkaSSE] -right-> BN: Kafka Protocol
+
+@startuml
+!theme plain
+
+rectangle "Client" {
+    [Browser\nEventSource]
+}
+
+rectangle "KafkaSSE Server" {
+    rectangle "lib/" {
+        [KafkaSSE] #lightblue {
+            - req
+            - res
+            - consumerManager
+            - sse
+            - messageHandler
+        }
+
+        [SSEResponse] #lightgreen {
+            - res
+            - headers
+        }
+
+        [MessageHandler] #lightyellow {
+            - consumer
+            - deserializer
+            - filterer
+            - latestOffsetsMap
+        }
+
+        [KafkaConsumerManager] #lightcoral {
+            - consumer
+            - kafka
+        }
+    }
+
+    rectangle "lib/kafka/" {
+        [Assignments]
+    }
+
+    [KafkaSSE] --> [SSEResponse]
+    [KafkaSSE] --> [MessageHandler]
+    [KafkaSSE] --> [KafkaConsumerManager]
+    [KafkaSSE] ..> [Assignments]
+
+    [MessageHandler] --> [SSEResponse]
+    [KafkaConsumerManager] --> [kafkajs]
+    [Assignments] --> [kafkajs]
+}
+
+rectangle "Kafka Cluster" {
+    [Broker 1]
+    [Broker 2]
+    [Broker N]
+}
+
+[Browser] --> [KafkaSSE]: HTTP SSE\nGET /topics
+[KafkaSSE] --> [KafkaConsumerManager]: connect()
+[KafkaSSE] --> [MessageHandler]: process()
+[KafkaConsumerManager] --> [Broker 1]: fetch messages
+[MessageHandler] ..> [KafkaConsumerManager]: consume()
+[SSEResponse] <-- [KafkaSSE]: send events
+[SSEResponse] --> [Browser]: text/event-stream
+
+@enduml
