@@ -23,17 +23,15 @@ flowchart LR
     end
     
     subgraph "Web Clients"
-        E[Browser 1]
-        F[Browser 2]
-        G[Mobile App]
+        E[Browser]
+        H[QLever]
     end
     
     A --> D
     B --> D
     
     D -->|SSE| E
-    D -->|SSE| F
-    D -->|SSE| G
+    D -->|SSE| H
 ```
 
 ## Quick Start
