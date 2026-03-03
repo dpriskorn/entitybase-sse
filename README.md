@@ -1,15 +1,15 @@
-# Entitybase-SSE
+# 🚀 Entitybase-SSE
 
 **Turn Kafka/Redpanda streams into real-time HTTP feeds your web app can consume.**
 
 Entitybase-SSE bridges your message broker to web browsers. It subscribes to Kafka/Redpanda topics and pushes each message to connected clients over a long-lived HTTP connection using [Server-Sent Events (SSE)](https://html.spec.whatwg.org/multipage/server-sent-events.html). No WebSockets, no polling—just simple push streaming over plain HTTP.
 
-## What is it good for?
+## ✨ What is it good for?
 
-- **Real-time dashboards** - Push live data to browsers without page refreshes
-- **Live notifications** - Broadcast events to all connected clients instantly  
-- **Streaming APIs** - Expose Kafka topics as public HTTP streams
-- **Event-driven frontends** - React/Vue/Svelte apps consuming event streams natively
+- ✅ **Real-time dashboards** — Push live data to browsers without page refreshes
+- ✅ **Live notifications** — Broadcast events to all connected clients instantly  
+- ✅ **Streaming APIs** — Expose Kafka topics as public HTTP streams
+- ✅ **Event-driven frontends** — React/Vue/Svelte apps consuming event streams natively
 
 ```mermaid
 flowchart LR
@@ -34,7 +34,7 @@ flowchart LR
     D -->|SSE| H
 ```
 
-## Quick Start
+## ⚡ Quick Start
 
 ```bash
 # Run with Docker (requires Redpanda at localhost:9092)
@@ -49,13 +49,13 @@ curl -N http://localhost:8081/v1/stream/your-topic
 
 For remote servers, replace `localhost` with your server IP.
 
-## API Endpoints
+## 🔌 API Endpoints
 
-- `GET /v1/streams` - List available topics
-- `GET /v1/stream/:topic` - Stream messages from a topic via SSE
-- `GET /docs` - OpenAPI documentation
+- `GET /v1/streams` — List available topics
+- `GET /v1/stream/:topic` — Stream messages from a topic via SSE
+- `GET /docs` — OpenAPI documentation
 
-## Docker
+## 🐳 Docker
 
 ```bash
 make build   # Build image
@@ -66,7 +66,7 @@ make clean   # Remove container and image
 
 Requires Redpanda/Kafka at `localhost:9092`.
 
-## Makefile Commands
+## 🛠️ Makefile Commands
 
 | Command | Description |
 |---------|-------------|
@@ -76,20 +76,20 @@ Requires Redpanda/Kafka at `localhost:9092`.
 | `make logs` | View container logs |
 | `make shell` | Open shell in container |
 
-## Environment Variables
+## ⚙️ Environment Variables
 
-- `KAFKA_BROKERS` - Broker address (default: `localhost:9092`)
-- `LOG_LEVEL` - trace, debug, info, warn, error (default: `warn`)
+- `KAFKA_BROKERS` — Broker address (default: `localhost:9092`)
+- `LOG_LEVEL` — trace, debug, info, warn, error (default: `warn`)
 
-## Author
+## 👤 Author
 
 - [Nizo Priskorn](https://github.com/dpriskorn)
 - Based on [KafkaSSE](https://github.com/wikimedia/KafkaSSE) by Wikimedia Foundation engineers
 
-## License
+## 📜 License
 
 [Apache License 2.0](LICENSE)
 
-## Thanks
+## 💜 Thanks
 
 Thanks to the fantastic engineers at the [Wikimedia Foundation (WMF)](https://www.wikimedia.org/) for creating KafkaSSE!
