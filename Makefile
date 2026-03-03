@@ -54,6 +54,7 @@ build:
 
 run:
 	@make check || exit 1
+	@make build || exit 1
 	@docker run -d \
 		--name $(CONTAINER_NAME) \
 		--network host \
