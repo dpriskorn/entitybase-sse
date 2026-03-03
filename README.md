@@ -1,9 +1,9 @@
 # KafkaSSE
 
-Kafka Consumer to HTTP SSE/EventSource
+Kafka Consumer to HTTP Server-Sent Events (SSE)/EventSource
 
 Uses [kafkajs](https://kafkajs.github.io/) KafkaConsumer to
-stream JSON messages to clients over HTTP in [SSE/EventSource format](https://www.w3.org/TR/eventsource/)
+stream JSON messages to clients over HTTP in [Server-Sent Events (SSE)/EventSource format](https://html.spec.whatwg.org/multipage/server-sent-events.html)
 
 The `Last-Event-ID` and EventSource `id` field will be used to handle auto-resume
 during client disconnects.  By using EventSource to connect to a KafkaSSE endpoint,
