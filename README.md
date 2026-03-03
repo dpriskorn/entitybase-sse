@@ -14,9 +14,8 @@ Entitybase-SSE bridges your message broker to web browsers. It subscribes to Kaf
 ```mermaid
 flowchart LR
     subgraph "Kafka/Redpanda"
-        A[Topic: orders]
-        B[Topic: users]
-        C[Topic: analytics]
+        A[Topic: entity-change]
+        B[Topic: entity-rdf-diff]
     end
     
     subgraph "Entitybase-SSE"
@@ -31,7 +30,6 @@ flowchart LR
     
     A --> D
     B --> D
-    C --> D
     
     D -->|SSE| E
     D -->|SSE| F
