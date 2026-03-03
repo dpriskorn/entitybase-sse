@@ -5,9 +5,10 @@
   "main": "index.js",
   "scripts": {
     "start": "./server.js | ./node_modules/bunyan/bin/bunyan",
-    "test": "jest --verbose --forceExit --no-cache",
+    "test": "jest --verbose --forceExit --no-cache --testPathIgnorePatterns=\"/test/integration/\"",
+    "test:all": "jest --verbose --forceExit --no-cache",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage --forceExit --no-cache",
+    "test:coverage": "jest --coverage --forceExit --no-cache --testPathIgnorePatterns=\"/test/integration/\"",
     "redpanda-fixture": "./test/utils/redpanda_fixture.sh",
     "test-docker": "./test/docker-tests.sh"
   },
@@ -47,6 +48,7 @@
   "jest": {
     "testEnvironment": "node",
     "testMatch": ["**/test/**/*.test.js"],
+    "testPathIgnorePatterns": ["/node_modules/", "/test/integration/"],
     "collectCoverageFrom": ["lib/**/*.js"],
     "coverageDirectory": "coverage",
     "forceExit": true

@@ -1,4 +1,4 @@
-.PHONY: help build run test test-docker coverage stop clean shell logs docs
+.PHONY: help build run test test-local test:unit test-docker coverage stop clean shell logs docs
 
 IMAGE_NAME=kafkasse
 CONTAINER_NAME=kafkasse
@@ -6,15 +6,19 @@ PORT=8081
 KAFKA_BROKERS?=localhost:9092
 
 help:
-	@echo "KafkaSSE Docker Makefile"
+	@echo "KafkaSSE Makefile"
 	@echo ""
-	@echo "Targets:"
+	@echo "Local targets (no Docker/Kafka required):"
+	@echo "  make test-local   - Install deps and run all tests locally"
+	@echo "  make test:unit   - Run unit tests only (no Kafka needed)"
+	@echo ""
+	@echo "Docker targets (requires Docker):"
 	@echo "  make build        - Build Docker image"
 	@echo "  make run          - Run container (requires redpanda at localhost:9092)"
-	@echo "  make test         - Run tests (requires Kafka at KAFKA_BROKERS)"
-	@echo "  make test-docker  - Run docker-compose tests (kafka in docker)"
-	@echo "  make coverage      - Run tests with coverage (requires Kafka at KAFKA_BROKERS)"
-	@echo "  make coverage-docker - Run docker-compose tests with coverage"
+	@echo "  make test-docker  - Run integration tests with Redpanda in Docker"
+	@echo "  make coverage-docker - Run integration tests with coverage"
+	@echo ""
+	@echo "Other targets:"
 	@echo "  make shell        - Open shell in running container"
 	@echo "  make logs         - View container logs"
 	@echo "  make stop         - Stop running container"
@@ -23,6 +27,18 @@ help:
 	@echo ""
 	@echo "Environment variables:"
 	@echo "  KAFKA_BROKERS     - Kafka broker address (default: localhost:9092)"
+
+test-local:
+	@echo "Installing dependencies..."
+	npm install
+	@echo "Running all tests..."
+	npm test
+
+test:unit:
+	@echo "Installing dependencies..."
+	npm install
+	@echo "Running unit tests (no Kafka required)..."
+	npx jest --verbose --forceExit --testPathIgnorePatterns="integration"
 
 docs:
 	./scripts/generate-diagrams.sh
