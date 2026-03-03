@@ -2,7 +2,7 @@
 
 **Turn Kafka/Redpanda streams into real-time HTTP feeds your web app can consume.**
 
-Entitybase-SSE bridges your message broker to web browsers. It subscribes to Kafka/Redpanda topics and pushes each message to connected clients over a long-lived HTTP connection using [Server-Sent Events (SSE)](https://html.spec.whatwg.org/multipage/server-sent-events.html). No WebSockets, no polling, just simple push streaming over plain HTTP.
+Entitybase-SSE bridges your message broker to web browsers. It subscribes to Kafka/Redpanda topics and pushes each message to connected clients over a long-lived HTTP connection using [Server-Sent Events (SSE)](https://html.spec.whatwg.org/multipage/server-sent-events.html). No WebSockets, no polling—just simple push streaming over plain HTTP.
 
 ## What is it good for?
 
