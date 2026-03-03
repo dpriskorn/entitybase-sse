@@ -19,6 +19,8 @@ help:
 	@echo "  make test-docker  - Run integration tests with Redpanda in Docker"
 	@echo "  make coverage-docker - Run integration tests with coverage"
 	@echo ""
+	@echo "Note: If running remotely, ensure firewall allows port $(PORT)"
+	@echo ""
 	@echo "Other targets:"
 	@echo "  make shell        - Open shell in running container"
 	@echo "  make logs         - View container logs"
