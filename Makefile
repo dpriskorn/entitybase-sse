@@ -1,4 +1,4 @@
-.PHONY: help build run test test-docker stop clean shell logs docs
+.PHONY: help build run test test-docker coverage stop clean shell logs docs
 
 IMAGE_NAME=kafkasse
 CONTAINER_NAME=kafkasse
@@ -11,8 +11,9 @@ help:
 	@echo "Targets:"
 	@echo "  make build        - Build Docker image"
 	@echo "  make run          - Run container (requires redpanda at localhost:9092)"
-	@echo "  make test         - Run tests (requires Kafka at KAFKA_BROKERS, default localhost:9092)"
+	@echo "  make test         - Run tests (requires Kafka at KAFKA_BROKERS)"
 	@echo "  make test-docker  - Run docker-compose tests (kafka in docker)"
+	@echo "  make coverage     - Run tests with coverage (requires Kafka at KAFKA_BROKERS)"
 	@echo "  make shell        - Open shell in running container"
 	@echo "  make logs         - View container logs"
 	@echo "  make stop         - Stop running container"
@@ -41,6 +42,11 @@ test:
 	@echo "Make sure Kafka/Redpanda is running at localhost:9092 or set KAFKA_BROKERS"
 	@echo "Or use 'make test-docker' to run tests with Kafka in Docker"
 	docker run --rm --network host -e KAFKA_BROKERS=$(KAFKA_BROKERS) $(IMAGE_NAME) npm test
+
+coverage:
+	@echo "Running tests with coverage requires Kafka broker at KAFKA_BROKERS"
+	@echo "Make sure Kafka/Redpanda is running at localhost:9092 or set KAFKA_BROKERS"
+	docker run --rm --network host -e KAFKA_BROKERS=$(KAFKA_BROKERS) $(IMAGE_NAME) npm run coverage
 
 test-docker:
 	./test/docker-tests.sh
