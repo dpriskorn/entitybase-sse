@@ -93,3 +93,10 @@ Requires Redpanda/Kafka at `localhost:9092`.
 ## 💜 Thanks
 
 Thanks to the fantastic engineers at the [Wikimedia Foundation (WMF)](https://www.wikimedia.org/) for creating KafkaSSE!
+
+## 📚 For Nerds
+
+- [Implementation Details](docs/IMPLEMENTATION.md) — Deep dive into how it works
+- [API Documentation](http://localhost:8081/docs) — OpenAPI specs (when running locally)
+- [Architecture Diagram](docs/diagrams/architecture.png) — System architecture
+- [Sequence Diagrams](docs/diagrams/) — Connection and loop flows
