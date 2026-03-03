@@ -23,7 +23,7 @@ REDPANDA_CONTAINERS=""
 start_redpanda() {
     echo "Starting Redpanda container..."
     pushd test/docker > /dev/null
-    ${DOCKER_COMPOSE_CMD} up -d redpanda
+    ${DOCKER_COMPOSE_CMD} up -d redpanda 2>/dev/null || true
     popd > /dev/null
 
     # Wait for Redpanda to be ready
@@ -42,11 +42,14 @@ start_redpanda() {
 stop_redpanda() {
     echo "Stopping Redpanda container (if any)..."
     pushd test/docker > /dev/null
-    ${DOCKER_COMPOSE_CMD} stop redpanda
-    ${DOCKER_COMPOSE_CMD} rm -f redpanda
+    ${DOCKER_COMPOSE_CMD} stop redpanda 2>/dev/null || true
+    ${DOCKER_COMPOSE_CMD} rm -f redpanda 2>&1 || true
     popd > /dev/null
 
-    REDPANDA_CONTAINERS=$(docker ps | grep "redpanda")
+    # Also try to clean up any leftover containers
+    docker rm -f testkafkasse_redpanda_1 2>/dev/null || true
+
+    REDPANDA_CONTAINERS=$(docker ps | grep "redpanda" || true)
     if [ -z "${REDPANDA_CONTAINERS}" ]; then
         echo "No redpanda container running - Good!"
     else
@@ -56,12 +59,19 @@ stop_redpanda() {
 
 
 build_and_test() {
-    # force rebuild testKafkaSSE image and run it (execute tests)
+    # Build testKafkaSSE image and run it (execute tests)
     echo "Building ${IMAGE_NAME} docker image."
-    docker build --no-cache -t "${IMAGE_NAME}" .
+    docker build -t "${IMAGE_NAME}" . 2>&1
     echo "Executing ${IMAGE_NAME} docker image (run tests)."
-    TEST_SUCCESS=$(docker run --rm --net "${APP_NAME}_${APP_NETWORK}" -e KAFKA_BROKERS=redpanda:9092 "${IMAGE_NAME}" npm test 2>&1 | grep -i "ERR\!")
-    echo "${TEST_SUCCESS}"
+    TEST_OUTPUT=$(docker run --rm --net "${APP_NAME}_${APP_NETWORK}" -e KAFKA_BROKERS=redpanda:9092 "${IMAGE_NAME}" npm run test-redpanda 2>&1)
+    echo "${TEST_OUTPUT}"
+    
+    # Check if there were any errors
+    if echo "${TEST_OUTPUT}" | grep -qi "ERR"; then
+        TEST_SUCCESS="ERRORS FOUND"
+    else
+        TEST_SUCCESS=""
+    fi
 }
 
 check_test() {
