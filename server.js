@@ -1,45 +1,155 @@
 #!/usr/bin/env node
 'use strict';
 
-
-const http =  require('http');
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+const yaml = require('yaml');
+const { Kafka } = require('kafkajs');
 const kafkaSseHandler = require('./index');
+const log = require('./lib/logger');
 
-const port = 6927;
+const port = 8081;
+const kafkaBroker = process.env.KAFKA_BROKERS || 'localhost:9092';
 
-const kafkaBroker = 'localhost:9092'
+const openApiSpec = yaml.parse(fs.readFileSync(path.join(__dirname, 'openapi.yaml'), 'utf8'));
 
-/**
- * Kasse test server.
- * Connect to this endpoint at localhost:${port}/:topics.
- * Kafka broker must be running at localhost:9092.
- * NOTE: This is just an example server.  You should
- * probably instantiate your own http server instnaces
- * and handle http requests with KafkaSSE instances in your own app.
- */
+const swaggerHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KafkaSSE API</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css">
+    <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-standalone-preset.js"></script>
+</head>
+<body>
+    <div id="swagger-ui"></div>
+    <script>
+        window.onload = () => {
+            window.ui = SwaggerUIBundle({
+                url: '/openapi.yaml',
+                dom_id: '#swagger-ui',
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIBundle.SwaggerUIStandalonePreset
+                ]
+            });
+        };
+    </script>
+</body>
+</html>`;
+
+async function listTopics() {
+    log.debug('Fetching topic metadata from Kafka...');
+    const kafka = new Kafka({
+        clientId: 'kafkasse-admin',
+        brokers: kafkaBroker.split(',').map(b => b.trim())
+    });
+    const admin = kafka.admin();
+    await admin.connect();
+    const metadata = await admin.fetchTopicMetadata();
+    await admin.disconnect();
+    const topics = metadata.topics.map(t => t.name);
+    log.debug({ topics }, 'Fetched topics from Kafka');
+    return topics;
+}
+
+function buildStreamSpec(topics) {
+    const paths = {};
+    topics.forEach(topic => {
+        paths[`/v1/stream/${topic}`] = {
+            get: {
+                summary: `Stream from ${topic}`,
+                description: `Subscribe to Kafka topic: ${topic}`,
+                tags: ['streams'],
+                parameters: [
+                    {
+                        name: 'Last-Event-ID',
+                        in: 'header',
+                        description: 'Kafka partition/offset for resumption',
+                        schema: { type: 'array' }
+                    }
+                ],
+                responses: {
+                    '200': {
+                        description: 'SSE stream',
+                        content: { 'text/event-stream': { schema: { type: 'string' } } }
+                    }
+                }
+            }
+        };
+    });
+    return { paths };
+}
+
 class KafkaSSEServer {
 
     constructor() {
         this.server = http.createServer();
-        this.server.on('request', (req, res) => {
-            const splitUrl = req.url.replace('/', '').split("?timestamp=");
-            const topics = splitUrl[0].split(',');
-            console.log(`Handling SSE request for topics ${topics}`);
-            const options = {
-                kafkaConfig: { 'metadata.broker.list':  kafkaBroker },
-                useTimestampForId: true
+        this.server.on('request', async (req, res) => {
+            const url = req.url;
+
+            if (url === '/' || url === '') {
+                res.writeHead(302, { 'Location': '/docs' });
+                res.end();
+                return;
             }
 
-            let atTimestamp = splitUrl.length > 1 ? Number(splitUrl[1]) : undefined;
+            if (url === '/docs' || url === '/docs/') {
+                res.writeHead(200, { 'Content-Type': 'text/html' });
+                res.end(swaggerHtml);
+                return;
+            }
 
-            // const atTimestamp = 'timestamp' in req.params ? Number(req.params.timestamp) : undefined;
-            kafkaSseHandler(req, res, topics, options, atTimestamp);
+            if (url === '/openapi.yaml' || url === '/spec') {
+                res.writeHead(200, { 'Content-Type': 'application/yaml' });
+                res.end(fs.readFileSync(path.join(__dirname, 'openapi.yaml'), 'utf8'));
+                return;
+            }
+
+            if (url.startsWith('/v1/streams')) {
+                try {
+                    const topics = await listTopics();
+                    const urlObj = new URL(url, `http://localhost:${port}`);
+                    if (urlObj.searchParams.has('spec')) {
+                        res.writeHead(200, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify(buildStreamSpec(topics), null, 2));
+                    } else {
+                        res.writeHead(200, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify({ streams: topics }));
+                    }
+                } catch (err) {
+                    console.error('Error listing topics:', err.message);
+                    res.writeHead(500, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: err.message }));
+                }
+                return;
+            }
+
+            if (url.startsWith('/v1/stream/')) {
+                const streamPath = url.replace('/v1/stream/', '');
+                const topics = streamPath.split(',');
+                log.info({ topics, url }, 'Handling SSE request');
+                const options = {
+                    kafkaConfig: { 'metadata.broker.list': kafkaBroker },
+                    useTimestampForId: true
+                };
+                kafkaSseHandler(req, res, topics, options);
+                return;
+            }
+
+            log.warn({ url }, 'Unhandled route, returning 404');
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Not found' }));
         });
     }
 
     listen() {
-        this.server.listen(port);
-        console.log(`Listening for HTTP SSE connections at on port ${port}`);
+        this.server.listen(port, '0.0.0.0');
+        console.log(`Listening for HTTP SSE connections on port ${port}`);
+        console.log(`API docs available at http://localhost:${port}/docs`);
     }
 }
 

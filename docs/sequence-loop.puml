@@ -1,0 +1,65 @@
+@startuml
+!theme plain
+
+title KafkaSSE Message Consume Loop
+
+participant "KafkaSSE" as SSE
+participant "MessageHandler" as MH
+participant "kafkajs Consumer" as Consumer
+participant "Kafka Broker" as Broker
+participant "SSEResponse" as SSER
+participant "HTTP Response" as Res
+
+== Per-Message Processing ==
+
+SSE -> MH: process()
+
+alt Not Finished
+    MH -> Consumer: consume(1)
+    Consumer -> Broker: fetch from partitions
+    Broker --> Consumer: messages[]
+
+    alt Messages Received
+        Consumer --> MH: kafkaMessage
+
+        group Deserialize
+            MH -> MH: deserialize(kafkaMessage)
+            note right: Parse JSON from value\nAdd _kafka metadata
+        end
+
+        group Filter (optional)
+            alt has filterer
+                MH -> MH: filter(deserialized)
+                note right: Return false to skip message
+            end
+        end
+
+        group Update Offsets
+            MH -> MH: updateLatestOffsets()
+            note right: Track latest offset/timestamp\nfor Last-Event-ID
+        end
+
+        MH --> SSE: message
+
+        SSE -> SSER: send('message', data, offsets)
+        SSER -> Res: write 'id: ...\ndata: ...'
+
+    else No Messages
+        Consumer --> MH: empty
+        MH -> MH: delay(idleDelayMs)
+        MH --> SSE: null
+    end
+
+    alt is Finished?
+        SSE -> SSE: return (exit loop)
+    else has message
+        SSE -> SSER: send(...)
+        SSE -> SSE: _loop()\n(recursive)
+    end
+
+else Finished
+    MH --> SSE: null
+    SSE -> SSE: return (exit loop)
+end
+
+@enduml

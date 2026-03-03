@@ -1,0 +1,75 @@
+@startuml
+!theme plain
+
+package "lib/" {
+    class KafkaSSE {
+        +constructor(req, res, options)
+        +connect(assignments, atTimestamp): Promise
+        -_init(assignments, atTimestamp)
+        -_start()
+        -_loop()
+        -disconnect(reason)
+        -_buildKafkaConfig()
+        -_checkTopicsAvailable(topics)
+    }
+
+    class KafkaConsumerManager {
+        +constructor(kafkaConfig, logger)
+        +connect(): Promise
+        +getTopicMetadata(allowedTopics): Promise<string[]>
+        +getFullTopicMetadata(): Promise<Topic[]>
+        +assign(partitions)
+        +consume()
+        +disconnect()
+    }
+
+    class MessageHandler {
+        +constructor(consumer, options, logger)
+        +process(): Promise
+        +handleMessage(kafkaMessage)
+        +setFinished()
+        -deserialize(kafkaMessage)
+        -filter(kafkaMessage)
+        -updateLatestOffsets(kafkaMessage)
+    }
+
+    class SSEResponse {
+        +constructor(res, options)
+        +start()
+        +send(event, data, id)
+        +end()
+    }
+
+    class Errors {
+        +KafkaSSEError
+        +ConfigurationError
+        +InvalidAssignmentError
+        +TopicNotAvailableError
+        +DeserializationError
+        +FilterError
+    }
+}
+
+package "lib/kafka/" {
+    class Assignments {
+        +validateAssignments(assignments)
+        +topicsToPartitionAssignment(topicsInfo, topics, atTimestamp, defaultOffset)
+        +buildAssignments(consumer, metadata, assignments, atTimestamp, defaultOffset)
+        +resolveTimestamps(consumer, assignments)
+    }
+}
+
+package "External" {
+    class Http {
+    }
+}
+
+KafkaSSE --> KafkaConsumerManager : creates & uses
+KafkaSSE --> MessageHandler : creates & uses
+KafkaSSE --> SSEResponse : creates & uses
+KafkaSSE --> Errors : throws
+KafkaSSE ..> Assignments : uses for validation
+MessageHandler --> SSEResponse : sends messages via
+MessageHandler --> Errors : throws
+
+@enduml

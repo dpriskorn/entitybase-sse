@@ -33,7 +33,7 @@ const KafkaSSE     = require('./lib/KafkaSSE');
  *
  * @param {Object|Array} assignments either an array of topic names, a string of comma
  *                delimited topic names, or an array of objects containing
- *                topic, partition, and offset suitable for passing to node-rdkafka
+ *                topic, partition, and offset suitable for passing to kafkajs
  *                KafkaConsumer assign().  If topic names are given, an assignments object
  *                will be created from them for all partitions in those topics, starting
  *                at latest offset in each.  NOTE: This parameter will be ignored

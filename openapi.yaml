@@ -1,0 +1,170 @@
+openapi: 3.0.3
+info:
+  title: KafkaSSE API
+  description: Kafka Consumer to HTTP SSE/EventSource. Streams JSON messages from Kafka topics to clients over HTTP in SSE format.
+  version: 0.5.0
+servers:
+  - url: http://localhost:8081
+    description: Local development server
+paths:
+  /v1/streams:
+    get:
+      summary: List available streams (Kafka topics)
+      description: |
+        Returns a list of available Kafka topics that can be streamed.
+        Use ?spec to get OpenAPI paths format for frontend compatibility.
+      operationId: listStreams
+      parameters:
+        - name: spec
+          in: query
+          required: false
+          description: Return OpenAPI paths format instead of simple list
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: List of streams or OpenAPI paths
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      streams:
+                        type: array
+                        items:
+                          type: string
+                        example: ["topic1", "topic2"]
+                  - type: object
+                    properties:
+                      paths:
+                        type: object
+                        additionalProperties:
+                          type: object
+  /v1/stream/{streams}:
+    get:
+      summary: Stream Kafka messages as SSE (v1)
+      description: |
+        Connects to Kafka and streams messages from the specified topics as Server-Sent Events.
+        Uses Last-Event-ID header for automatic resume on reconnection.
+      operationId: streamTopicsV1
+      parameters:
+        - name: streams
+          in: path
+          required: true
+          description: Comma-separated list of Kafka topics
+          schema:
+            type: string
+          example: topic1,topic2
+        - name: Last-Event-ID
+          in: header
+          required: false
+          description: Kafka partition/offset for resumption
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                topic:
+                  type: string
+                partition:
+                  type: integer
+                offset:
+                  type: integer
+      responses:
+        '200':
+          description: SSE stream of Kafka messages
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+  /{topics}:
+    get:
+      summary: Stream Kafka messages as SSE (legacy)
+      description: |
+        Legacy endpoint. Use /v1/stream/{streams} instead.
+        Connects to Kafka and streams messages from the specified topics as Server-Sent Events.
+        Uses Last-Event-ID header for automatic resume on reconnection.
+      operationId: streamTopics
+      parameters:
+        - name: topics
+          in: path
+          required: true
+          description: Comma-separated list of Kafka topics
+          schema:
+            type: string
+          example: wikibase.entity_change,wikibase.entity_diff
+        - name: timestamp
+          in: query
+          required: false
+          description: Start streaming from this timestamp (milliseconds since epoch)
+          schema:
+            type: integer
+          example: 1704067200000
+      responses:
+        '200':
+          description: SSE stream of Kafka messages
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                example: |
+                  id: [{"topic":"wikibase.entity_change","partition":0,"offset":123}]
+                  data: {"entityId":"Q123","event":"modify"}
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+  /spec:
+    get:
+      summary: Get OpenAPI specification
+      responses:
+        '200':
+          description: OpenAPI spec in YAML format
+          content:
+            application/yaml:
+              schema:
+                type: string
+  /:
+    get:
+      summary: Redirect to API documentation
+      responses:
+        '302':
+          description: Redirect to /docs
+          headers:
+            Location:
+              schema:
+                type: string
+              example: /docs

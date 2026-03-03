@@ -1,0 +1,47 @@
+@startuml
+!theme plain
+
+package "KafkaSSE Server" {
+    [index.js]
+    
+    package lib {
+        [KafkaSSE]
+        [SSEResponse]
+        [MessageHandler]
+        [KafkaConsumerManager]
+        [Errors]
+        
+        package kafka {
+            [Assignments]
+        }
+    }
+    
+    [KafkaSSE] --> [SSEResponse]
+    [KafkaSSE] --> [MessageHandler]
+    [KafkaSSE] --> [KafkaConsumerManager]
+    [KafkaSSE] ..> [Assignments]
+    [KafkaSSE] --> [Errors]
+    
+    [MessageHandler] --> [SSEResponse]
+    [KafkaConsumerManager] --> [kafkajs]
+    [Assignments] --> [kafkajs]
+}
+
+node "HTTP Client" {
+    [Browser]
+}
+
+node "Kafka Cluster" {
+    [Broker1]
+    [Broker2]
+    [BrokerN]
+}
+
+[Browser] --> [index.js] : HTTP SSE /topics
+[index.js] --> [KafkaSSE]
+[KafkaSSE] --> [Broker1] : Kafka Protocol
+[KafkaSSE] --> [Broker2] : Kafka Protocol
+[KafkaSSE] --> [BrokerN] : Kafka Protocol
+[SSEResponse] --> [Browser] : text/event-stream
+
+@enduml

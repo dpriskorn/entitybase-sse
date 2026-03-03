@@ -1,0 +1,91 @@
+@startuml
+!theme plain
+
+title KafkaSSE Connection Flow
+
+actor Client
+participant "HTTP Request" as Req
+participant "KafkaSSE" as SSE
+participant "KafkaConsumerManager" as KCM
+participant "kafkajs" as Kafka
+participant "Kafka Broker" as Broker
+participant "SSEResponse" as SSER
+
+Client -> Req: HTTP GET /topics
+Req -> SSE: connect(assignments, atTimestamp)
+
+group Initialization Phase
+    SSE -> KCM: new KafkaConsumerManager(config, logger)
+    SSE -> KCM: connect()
+    KCM -> Kafka: new Kafka({clientId, brokers})
+    Kafka -> Broker: connect
+    Broker --> Kafka: connected
+    Kafka --> KCM: consumer
+
+    SSE -> KCM: getTopicMetadata(allowedTopics)
+    KCM -> Kafka: admin.fetchTopicMetadata()
+    Kafka -> Broker: describe topics
+    Broker --> Kafka: topic metadata
+    Kafka --> KCM: metadata
+    KCM --> SSE: available topics
+
+    SSE -> SSE: _checkTopicsAvailable(topics)
+
+    SSE -> KCM: getFullTopicMetadata()
+    KCM --> SSE: full metadata
+
+    SSE -> Assignments: buildAssignments(consumer, metadata, assignments, atTimestamp)
+    Assignments -> Kafka: admin.fetchOffsetsByTimestamp()
+    Kafka -> Broker: lookup offsets
+    Broker --> Kafka: offsets
+    Kafka --> Assignments: resolved offsets
+    Assignments --> SSE: resolved assignments
+
+    SSE -> KCM: assign(partitions)
+    KCM -> Kafka: consumer.assign(partitions)
+    Kafka -> Broker: subscribe to partitions
+end
+
+group SSE Start
+    SSE -> SSER: new SSEResponse(res, options)
+    SSE -> SSER: start()
+    SSER -> Req: writeHead(200, SSE headers)
+    Req --> Client: HTTP 200 OK
+end
+
+group Consume Loop
+    SSE -> SSE: _loop()
+    loop forever
+        SSE -> MessageHandler: process()
+        MessageHandler -> Kafka: consumer.consume(1)
+        Kafka -> Broker: fetch messages
+        Broker --> Kafka: messages
+        Kafka --> MessageHandler: kafkaMessage
+
+        alt message found
+            MessageHandler -> MessageHandler: deserialize(kafkaMessage)
+            MessageHandler -> MessageHandler: filter(kafkaMessage)
+            MessageHandler -> MessageHandler: updateLatestOffsets()
+
+            MessageHandler --> SSE: processed message
+
+            SSE -> SSER: send(event, data, offsets)
+            SSER -> Req: write SSE event format
+            Req --> Client: SSE stream
+
+            SSE -> SSE: _loop()
+        else no message
+            MessageHandler --> SSE: null
+            SSE -> SSE: delay(idleDelayMs)
+            SSE -> SSE: _loop()
+        end
+    end
+end
+
+Client -> Req: disconnect (close connection)
+Req -> SSE: disconnect(reason)
+SSE -> SSER: end()
+SSE -> KCM: disconnect()
+KCM -> Kafka: consumer.disconnect()
+
+@enduml

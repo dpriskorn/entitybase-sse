@@ -2,7 +2,7 @@
 
 Kafka Consumer to HTTP SSE/EventSource
 
-Uses [node-rdkafka](https://github.com/Blizzard/node-rdkafka) KafkaConsumer to
+Uses [kafkajs](https://kafkajs.github.io/) KafkaConsumer to
 stream JSON messages to clients over HTTP in [SSE/EventSource format](https://www.w3.org/TR/eventsource/)
 
 The `Last-Event-ID` and EventSource `id` field will be used to handle auto-resume
@@ -57,21 +57,21 @@ server.on('request', (req, res) => {
     });
 });
 
-server.listen(6917);
-console.log('Listening for SSE connections at http:/localhost:6917/:topics');
+server.listen(8081);
+console.log('Listening for SSE connections at http:/localhost:8081/:topics');
 ```
 
 
 ### Custom deserializer
 
-The default deserializer used for messages returned from node-rdkafka assumes
+The default deserializer used for messages returned from kafkajs assumes
 that `kafkaMessage.value` is a utf-8 byte buffer containing a JSON string.  It parses
 `kafkaMessage.value` into an object, and then sets it as `kafkaMessage.message`.
 `kafkaMessage.message` is what will be sent to the connected SSE client as an
 event.
 
 You may override this default deserializer.  The deserializer is given the `kafkaMessage` as
-returned by node-rdkafka `consume`.  You must make sure to set the `message` field on this
+returned by kafkajs `consume`.  You must make sure to set the `message` field on this
 object, and not modify the other top level fields such as `topic`, `offset` and `partition`.
 These are used to set the `Last-Event-ID` header.
 
@@ -121,7 +121,7 @@ kafkaSse(req, res, topics, {
 const EventSource = require('eventsource');
 'use strict';
 const topics = process.argv[2];
-const port   = 6917
+const port   = 8081
 
 const url = `http://localhost:${port}/${topics}`;
 console.log(`Connecting to Kafka SSE server at ${url}`);
@@ -181,24 +181,27 @@ to specify the positions at which KafkaSSE should start consuming from Kafka.
 
 Consumer group management is also not supported.  Each new SSE client
 corresponds to a new consumer group.  There is no way to parallelize
-consumption from Kafka for a single connected client.  Ideally, we would not
-register a consumer group at all with Kafka, but as of this writing
-[librdkafka](https://github.com/Blizzard/node-rdkafka/issues/18) and
-[blizzard/node-rdkafka](https://github.com/Blizzard/node-rdkafka/issues/18)
-don't support this yet.  Consumer groups that are registered with Kafka
-are named after the `x-request-id` header, or a uuid if this is not set, e.g.
-`KafkaSSE-2a360ded-1da0-4258-bad5-90ce954b7c52`.
+consumption from Kafka for a single connected client.  Consumer groups that 
+are registered with Kafka are named after the `x-request-id` header, or a uuid 
+if this is not set, e.g. `KafkaSSE-2a360ded-1da0-4258-bad5-90ce954b7c52`.
 
-## node-rdkafka consume modes
-The node-rdkafka client that KafkaSSE uses has
-[several consume APIs](https://github.com/Blizzard/node-rdkafka#kafkakafkaconsumer).
-KafkaSSE uses the [Standard Non flowing API](https://github.com/Blizzard/node-rdkafka#standard-api-1).
+## Docker
 
+Build and run the container:
+
+```bash
+make build
+make run
+```
+
+The server will be available at `http://localhost:8081` with API docs at `http://localhost:8081/docs`.
+
+> **Note:** If running remotely, ensure your firewall allows port 8081 (e.g., `sudo ufw allow 8081/tcp`).
 
 ## Testing
 
 ### On host
-Mocha tests require a running 0.11+ Kafka broker at `localhost:9092` with
+Mocha tests require a running Kafka broker at `localhost:9092` with
 `delete.topic.enable=true`.  `test/utils/kafka_fixture.sh` will prepare
 topics in Kafka for tests.  `npm test` will download, install, and run
 a Kafka broker.  If you already have one running locally, then
