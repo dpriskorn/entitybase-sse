@@ -1,12 +1,12 @@
 .PHONY: help build run test test-local test-unit test-docker coverage stop clean shell logs docs check
 
-IMAGE_NAME=kafkasse
-CONTAINER_NAME=kafkasse
+IMAGE_NAME=entitybase-sse
+CONTAINER_NAME=entitybase-sse
 PORT=8081
 KAFKA_BROKERS?=localhost:9092
 
 help:
-	@echo "KafkaSSE Makefile"
+	@echo "Entitybase-SSE Makefile"
 	@echo ""
 	@echo "Local targets (no Docker/Kafka required):"
 	@echo "  make test-local   - Install deps and run all tests locally"
@@ -67,7 +67,7 @@ run:
 		-p $(PORT):$(PORT) \
 		$(IMAGE_NAME) 2>&1 | grep -v "WARNING" || true
 	@echo ""
-	@echo "✅ KafkaSSE server running"
+	@echo "✅ Entitybase-SSE server running"
 	@echo "   - Server: http://localhost:$(PORT)"
 	@echo "   - Docs:   http://localhost:$(PORT)/docs"
 
