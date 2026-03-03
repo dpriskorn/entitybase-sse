@@ -9,4 +9,3 @@ coverage
 *.log
 docs
 scripts
-openapi.yaml
