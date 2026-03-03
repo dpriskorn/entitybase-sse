@@ -1,0 +1,120 @@
+name: Test & Quality
+
+on:
+  push:
+    branches: [main, master, entitybase-redpanda]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      redpanda:
+        image: docker.redpanda.com/redpandadata/redpanda:v25.3.6
+        ports:
+          - 9092:9092
+        options: --memory 1G --cpus 1
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Create test topics
+        run: |
+          sleep 15
+          docker exec ${{ job.services.redpanda.id }} rpk topic create kafkaSSE_test_01 -p 1 -r 1 2>/dev/null || true
+          docker exec ${{ job.services.redpanda.id }} rpk topic create kafkaSSE_test_02 -p 1 -r 1 2>/dev/null || true
+          docker exec ${{ job.services.redpanda.id }} rpk topic create kafkaSSE_test_03 -p 1 -r 1 2>/dev/null || true
+          docker exec ${{ job.services.redpanda.id }} rpk topic create kafkaSSE_test_04 -p 1 -r 1 2>/dev/null || true
+      
+      - name: Run tests with coverage
+        env:
+          KAFKA_BROKERS: localhost:9092
+          LOG_LEVEL: error
+        run: npm run test:coverage
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/lcov.info
+          fail_ci_if_error: true
+        continue-on-error: true
+
+  test-unit:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run unit tests
+        env:
+          LOG_LEVEL: error
+        run: npm test
+
+  lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run ESLint
+        run: npx eslint . --ext .js || true
+
+  security:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run security audit
+        run: npm audit --audit-level=moderate || true
+      
+      - name: Check for vulnerabilities
+        run: npm audit --json > audit.json 2>/dev/null || true
+        continue-on-error: true
+      
+      - name: Upload audit results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: npm-audit
+          path: audit.json
+          retention-days: 7
