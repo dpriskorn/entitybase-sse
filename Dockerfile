@@ -1,4 +1,3 @@
-# KafkaSSE Dockerfile
 FROM node:24-slim
 
 WORKDIR /app

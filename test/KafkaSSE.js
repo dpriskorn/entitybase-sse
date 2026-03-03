@@ -50,7 +50,7 @@ const customDeserializedMessage = {
 }
 
 function customDeserializer(kafkaMessage) {
-    // deserializer should return a node-rdkafka message,
+    // deserializer should return a kafkajs message,
     // with kafkaMessage.message deserialized from the kafka message value.
     kafkaMessage.message = customDeserializedMessage;
     return kafkaMessage;
@@ -498,6 +498,8 @@ describe('KafkaSSE', function() {
         // this test only.
         const topicName = otherTopicName;
 
+        // Note: This test uses node-rdkafka for producing test messages.
+        // TODO: Update to use kafkajs producer
         const kafka = require('node-rdkafka');
         var producer = new kafka.Producer({
             'metadata.broker.list': kafkaBroker
