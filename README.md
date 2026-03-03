@@ -86,6 +86,10 @@ Requires Redpanda/Kafka at `localhost:9092`.
 - [Dennis Priskorn](https://github.com/dpriskorn)
 - Based on [KafkaSSE](https://github.com/wikimedia/KafkaSSE) by Wikimedia Foundation engineers
 
+## License
+
+[Apache License 2.0](LICENSE)
+
 ## Thanks
 
 Thanks to the fantastic engineers at the [Wikimedia Foundation (WMF)](https://www.wikimedia.org/) for creating KafkaSSE!
