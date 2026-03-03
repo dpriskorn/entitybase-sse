@@ -101,7 +101,7 @@ describe('SSEResponse', () => {
 
     test('should support custom serializer', async () => {
         const customSerializer = (data) => 'serialized output';
-        const options = { serializer: customSerializer };
+        const options = { serialize: customSerializer };
         server = new TestSSEServer(defaultPort + 2, options, objectMessageBuilder);
         await server.listen();
         
