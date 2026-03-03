@@ -51,7 +51,7 @@ async function listTopics() {
     await admin.connect();
     const metadata = await admin.fetchTopicMetadata();
     await admin.disconnect();
-    const topics = metadata.map(t => t.name);
+    const topics = metadata.topics.map(t => t.name);
     log.debug({ topics }, 'Fetched topics from Kafka');
     return topics;
 }
