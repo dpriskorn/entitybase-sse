@@ -1,8 +1,6 @@
 name: Test & Quality
 
 on:
-  push:
-    branches: [main, master, entitybase-redpanda]
   pull_request:
     branches: [main, master]
 
