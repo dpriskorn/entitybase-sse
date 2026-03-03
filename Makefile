@@ -1,4 +1,4 @@
-.PHONY: help build run test test-docker stop clean shell logs
+.PHONY: help build run test test-docker stop clean shell logs docs
 
 IMAGE_NAME=kafkasse
 CONTAINER_NAME=kafkasse
@@ -17,9 +17,13 @@ help:
 	@echo "  make logs         - View container logs"
 	@echo "  make stop         - Stop running container"
 	@echo "  make clean        - Remove container and image"
+	@echo "  make docs         - Generate PlantUML diagrams"
 	@echo ""
 	@echo "Environment variables:"
 	@echo "  KAFKA_BROKERS     - Kafka broker address (default: localhost:9092)"
+
+docs:
+	./scripts/generate-diagrams.sh
 
 build:
 	docker build -t $(IMAGE_NAME) .
