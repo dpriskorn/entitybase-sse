@@ -27,18 +27,19 @@ help:
 	@echo ""
 	@echo "Environment variables:"
 	@echo "  KAFKA_BROKERS     - Kafka broker address (default: localhost:9092)"
+	@echo "  LOG_LEVEL         - Log level: trace, debug, info, warn, error (default: warn)"
 
 test-local:
 	@echo "Installing dependencies..."
 	npm install
 	@echo "Running all tests..."
-	npm test
+	LOG_LEVEL=debug npm test
 
 test-unit:
 	@echo "Installing dependencies..."
 	npm install
 	@echo "Running unit tests (no Kafka required)..."
-	npx jest --verbose --forceExit --testPathIgnorePatterns="integration"
+	LOG_LEVEL=debug npx jest --verbose --forceExit --testPathIgnorePatterns="integration"
 
 docs:
 	./scripts/generate-diagrams.sh
@@ -51,6 +52,7 @@ run:
 		--name $(CONTAINER_NAME) \
 		--network host \
 		-e KAFKA_BROKERS=$(KAFKA_BROKERS) \
+		-e LOG_LEVEL=$(LOG_LEVEL) \
 		-p $(PORT):$(PORT) \
 		$(IMAGE_NAME)
 
@@ -58,18 +60,18 @@ test:
 	@echo "Running tests requires Kafka broker at KAFKA_BROKERS"
 	@echo "Make sure Kafka/Redpanda is running at localhost:9092 or set KAFKA_BROKERS"
 	@echo "Or use 'make test-docker' to run tests with Kafka in Docker"
-	docker run --rm --network host -e KAFKA_BROKERS=$(KAFKA_BROKERS) $(IMAGE_NAME) npm test
+	docker run --rm --network host -e KAFKA_BROKERS=$(KAFKA_BROKERS) -e LOG_LEVEL=$(LOG_LEVEL) $(IMAGE_NAME) npm test
 
 coverage:
 	@echo "Running tests with coverage requires Kafka broker at KAFKA_BROKERS"
 	@echo "Make sure Kafka/Redpanda is running at localhost:9092 or set KAFKA_BROKERS"
-	docker run --rm --network host -e KAFKA_BROKERS=$(KAFKA_BROKERS) $(IMAGE_NAME) npm run coverage
+	docker run --rm --network host -e KAFKA_BROKERS=$(KAFKA_BROKERS) -e LOG_LEVEL=$(LOG_LEVEL) $(IMAGE_NAME) npm run coverage
 
 test-docker:
-	./test/docker-tests.sh
+	LOG_LEVEL=debug ./test/docker-tests.sh
 
 coverage-docker:
-	./test/docker-tests.sh coverage
+	LOG_LEVEL=debug ./test/docker-tests.sh coverage
 
 shell:
 	docker exec -it $(CONTAINER_NAME) /bin/sh

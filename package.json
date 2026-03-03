@@ -34,6 +34,7 @@
     "bunyan": "^1.8.1",
     "kafkajs": "^2.2.4",
     "lodash": "^4.15.0",
+    "loglevel": "^1.9.2",
     "safe-regex": "^1.1.0",
     "swagger-ui-express": "^5.0.0",
     "uuid": "^3.3.2",
@@ -47,9 +48,16 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "testMatch": ["**/test/**/*.test.js"],
-    "testPathIgnorePatterns": ["/node_modules/", "/test/integration/"],
-    "collectCoverageFrom": ["lib/**/*.js"],
+    "testMatch": [
+      "**/test/**/*.test.js"
+    ],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/test/integration/"
+    ],
+    "collectCoverageFrom": [
+      "lib/**/*.js"
+    ],
     "coverageDirectory": "coverage",
     "forceExit": true
   }
