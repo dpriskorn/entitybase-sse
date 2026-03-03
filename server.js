@@ -5,6 +5,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const yaml = require('yaml');
+const { Kafka } = require('kafkajs');
 const kafkaSseHandler = require('./index');
 
 const port = 8081;
@@ -39,11 +40,51 @@ const swaggerHtml = `<!DOCTYPE html>
 </body>
 </html>`;
 
+async function listTopics() {
+    const kafka = new Kafka({
+        clientId: 'kafkasse-admin',
+        brokers: kafkaBroker.split(',').map(b => b.trim())
+    });
+    const admin = kafka.admin();
+    await admin.connect();
+    const metadata = await admin.fetchTopicMetadata();
+    await admin.disconnect();
+    return metadata.map(t => t.name);
+}
+
+function buildStreamSpec(topics) {
+    const paths = {};
+    topics.forEach(topic => {
+        paths[`/v1/stream/${topic}`] = {
+            get: {
+                summary: `Stream from ${topic}`,
+                description: `Subscribe to Kafka topic: ${topic}`,
+                tags: ['streams'],
+                parameters: [
+                    {
+                        name: 'Last-Event-ID',
+                        in: 'header',
+                        description: 'Kafka partition/offset for resumption',
+                        schema: { type: 'array' }
+                    }
+                ],
+                responses: {
+                    '200': {
+                        description: 'SSE stream',
+                        content: { 'text/event-stream': { schema: { type: 'string' } } }
+                    }
+                }
+            }
+        };
+    });
+    return { paths };
+}
+
 class KafkaSSEServer {
 
     constructor() {
         this.server = http.createServer();
-        this.server.on('request', (req, res) => {
+        this.server.on('request', async (req, res) => {
             const url = req.url;
 
             if (url === '/' || url === '') {
@@ -58,15 +99,44 @@ class KafkaSSEServer {
                 return;
             }
 
-            if (url === '/openapi.yaml') {
+            if (url === '/openapi.yaml' || url === '/spec') {
                 res.writeHead(200, { 'Content-Type': 'application/yaml' });
                 res.end(fs.readFileSync(path.join(__dirname, 'openapi.yaml'), 'utf8'));
                 return;
             }
 
+            if (url.startsWith('/v1/streams')) {
+                try {
+                    const topics = await listTopics();
+                    const urlObj = new URL(url, `http://localhost:${port}`);
+                    if (urlObj.searchParams.has('spec')) {
+                        res.writeHead(200, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify(buildStreamSpec(topics), null, 2));
+                    } else {
+                        res.writeHead(200, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify({ streams: topics }));
+                    }
+                } catch (err) {
+                    console.error('Error listing topics:', err.message);
+                    res.writeHead(500, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: err.message }));
+                }
+                return;
+            }
+
+            if (url.startsWith('/v1/stream/')) {
+                const streamPath = url.replace('/v1/stream/', '');
+                const topics = streamPath.split(',');
+                const options = {
+                    kafkaConfig: { 'metadata.broker.list': kafkaBroker },
+                    useTimestampForId: true
+                };
+                kafkaSseHandler(req, res, topics, options);
+                return;
+            }
+
             const splitUrl = url.replace('/', '').split("?timestamp=");
             const topics = splitUrl[0].split(',');
-            console.log(`Handling SSE request for topics ${topics}`);
             const options = {
                 kafkaConfig: { 'metadata.broker.list': kafkaBroker },
                 useTimestampForId: true
