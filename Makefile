@@ -1,4 +1,4 @@
-.PHONY: help build run test test-local test-unit test-docker coverage stop clean shell logs docs
+.PHONY: help build run test test-local test-unit test-docker coverage stop clean shell logs docs check
 
 IMAGE_NAME=kafkasse
 CONTAINER_NAME=kafkasse
@@ -13,6 +13,7 @@ help:
 	@echo "  make test-unit   - Run unit tests only (no Kafka needed)"
 	@echo ""
 	@echo "Docker targets (requires Docker):"
+	@echo "  make check        - Check if Redpanda is running"
 	@echo "  make build        - Build Docker image"
 	@echo "  make run          - Run container (requires redpanda at localhost:9092)"
 	@echo "  make test-docker  - Run integration tests with Redpanda in Docker"
@@ -28,6 +29,10 @@ help:
 	@echo "Environment variables:"
 	@echo "  KAFKA_BROKERS     - Kafka broker address (default: localhost:9092)"
 	@echo "  LOG_LEVEL         - Log level: trace, debug, info, warn, error (default: warn)"
+
+check:
+	@echo "Checking if Redpanda is running..."
+	@docker ps --format '{{.Names}}\t{{.Status}}' | grep -q redpanda && echo "✅ Redpanda is running" || (echo "❌ Redpanda is not running" && echo "Start with: docker run -d --name redpanda -p 9092:9092 docker.redpanda.com/redpandadata/redpanda:v25.3.6" && exit 1)
 
 test-local:
 	@echo "Installing dependencies..."
