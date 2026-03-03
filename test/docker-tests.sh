@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # This code has been tested with:
 # - docker-engine^1.12.4
@@ -15,38 +16,41 @@ DOCKER_COMPOSE_CMD="docker-compose -p ${APP_NAME}"
 IMAGE_NAME="testkafkasse"
 
 # Initialised to empty
-KAFKA_CONTAINERS=""
+REDPANDA_CONTAINERS=""
 
 
-# Build and start kafka/zookeeper containers
-start_kafka() {
-    echo "Building and starting kafka/zookeeper containers."
+# Build and start redpanda container
+start_redpanda() {
+    echo "Starting Redpanda container..."
     pushd test/docker > /dev/null
-    ${DOCKER_COMPOSE_CMD} build
-    ${DOCKER_COMPOSE_CMD} up -d
+    ${DOCKER_COMPOSE_CMD} up -d redpanda
     popd > /dev/null
 
-    # Check kafka container is running
-    KAFKA_CONTAINERS=$(docker ps | grep "9092/tcp")
-    if [ -z "${KAFKA_CONTAINERS}" ]; then
-        echo "No kafka container running - Stopping in error!" && exit 1
+    # Wait for Redpanda to be ready
+    echo "Waiting for Redpanda to be ready..."
+    sleep 10
+
+    # Check redpanda container is running
+    REDPANDA_CONTAINERS=$(docker ps | grep "redpanda")
+    if [ -z "${REDPANDA_CONTAINERS}" ]; then
+        echo "No redpanda container running - Stopping in error!" && exit 1
     else
-        echo "Kafka container running - Moving forward!"
+        echo "Redpanda container running - Moving forward!"
     fi
 }
 
-stop_kafka() {
-    echo "Stopping kafka/zookeeper containers (if any)."
+stop_redpanda() {
+    echo "Stopping Redpanda container (if any)..."
     pushd test/docker > /dev/null
-    ${DOCKER_COMPOSE_CMD} stop
-    ${DOCKER_COMPOSE_CMD} rm -f
+    ${DOCKER_COMPOSE_CMD} stop redpanda
+    ${DOCKER_COMPOSE_CMD} rm -f redpanda
     popd > /dev/null
 
-    KAFKA_CONTAINERS=$(docker ps | grep "9092/tcp")
-    if [ -z "${KAFKA_CONTAINERS}" ]; then
-        echo "No kafka container running - Good!"
+    REDPANDA_CONTAINERS=$(docker ps | grep "redpanda")
+    if [ -z "${REDPANDA_CONTAINERS}" ]; then
+        echo "No redpanda container running - Good!"
     else
-        echo "Kafka container still running - Not good!" && exit 1
+        echo "Redpanda container still running - Not good!" && exit 1
     fi
 }
 
@@ -56,7 +60,7 @@ build_and_test() {
     echo "Building ${IMAGE_NAME} docker image."
     docker build --no-cache -t "${IMAGE_NAME}" .
     echo "Executing ${IMAGE_NAME} docker image (run tests)."
-    TEST_SUCCESS=$(docker run --rm --net "${APP_NAME}_${APP_NETWORK}" "${IMAGE_NAME}" | grep "npm ERR!")
+    TEST_SUCCESS=$(docker run --rm --net "${APP_NAME}_${APP_NETWORK}" -e KAFKA_BROKERS=redpanda:9092 "${IMAGE_NAME}" npm test 2>&1 | grep -i "ERR\!")
     echo "${TEST_SUCCESS}"
 }
 
@@ -64,20 +68,22 @@ check_test() {
     if [ -z "${TEST_SUCCESS}" ]; then
         echo "Tests successful !" && exit 0
     else
-        echo "Tests NOT successful :(" && exit 1
+        echo "Tests NOT successful :(" 
+        echo "${TEST_SUCCESS}"
+        exit 1
     fi
 }
 
 
-stop_kafka
+stop_redpanda
 
-start_kafka
+start_redpanda
 
-# Give some time to containers to start
+# Give some time for Redpanda to be fully ready
 sleep 5
 
 build_and_test
 
-stop_kafka
+stop_redpanda
 
 check_test

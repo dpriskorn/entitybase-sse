@@ -6,6 +6,8 @@
   "scripts": {
     "start": "./server.js | ./node_modules/bunyan/bin/bunyan",
     "test": "npm run test-jenkins",
+    "test-redpanda": "npm run redpanda-fixture && npm run coverage",
+    "redpanda-fixture": "./test/utils/redpanda_fixture.sh",
     "kafka-install": "./test/utils/kafka_install.sh",
     "kafka-start": "./test/utils/kafka.sh start",
     "kafka-stop": "./test/utils/kafka.sh stop",
