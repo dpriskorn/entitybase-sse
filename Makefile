@@ -1,4 +1,4 @@
-.PHONY: help build run test test-local test-unit test-docker coverage stop clean shell logs docs check
+.PHONY: help backend-build backend-run backend-test backend-test-local backend-test-unit backend-test-docker backend-coverage backend-stop backend-clean backend-shell backend-logs backend-docs backend-check release frontend-install frontend-dev frontend-build frontend-preview frontend-test frontend-test-run
 
 IMAGE_NAME=entitybase-sse
 CONTAINER_NAME=entitybase-sse
@@ -8,57 +8,87 @@ KAFKA_BROKERS?=localhost:9092
 help:
 	@echo "Entitybase-SSE Makefile"
 	@echo ""
-	@echo "Local targets (no Docker/Kafka required):"
-	@echo "  make test-local   - Install deps and run all tests locally"
-	@echo "  make test-unit   - Run unit tests only (no Kafka needed)"
+	@echo "Frontend targets:"
+	@echo "  make frontend-install     - Install frontend dependencies"
+	@echo "  make frontend-dev         - Run frontend dev server (with hot reload)"
+	@echo "  make frontend-build       - Build frontend for production"
+	@echo "  make frontend-preview     - Preview built frontend"
+	@echo "  make frontend-test-run    - Run frontend tests"
+	@echo "  make frontend-test        - Run frontend tests with UI"
 	@echo ""
-	@echo "Docker targets (requires Docker):"
-	@echo "  make check        - Check if Redpanda is running"
-	@echo "  make build        - Build Docker image"
-	@echo "  make run          - Run container (requires redpanda at localhost:9092)"
-	@echo "  make test-docker  - Run integration tests with Redpanda in Docker"
-	@echo "  make coverage-docker - Run integration tests with coverage"
+	@echo "Backend targets (Docker/Kafka required):"
+	@echo "  make backend-check        - Check if Redpanda is running"
+	@echo "  make backend-build        - Build Docker image"
+	@echo "  make backend-run          - Run container (requires redpanda at localhost:9092)"
+	@echo "  make backend-test-docker  - Run integration tests with Redpanda in Docker"
+	@echo "  make backend-coverage-docker - Run integration tests with coverage"
+	@echo ""
+	@echo "Backend local targets (no Docker/Kafka required):"
+	@echo "  make backend-test-local   - Install deps and run all tests locally"
+	@echo "  make backend-test-unit    - Run unit tests only (no Kafka needed)"
 	@echo ""
 	@echo "Note: If running remotely, ensure firewall allows port $(PORT)"
 	@echo ""
 	@echo "Other targets:"
-	@echo "  make shell        - Open shell in running container"
-	@echo "  make logs         - View container logs"
-	@echo "  make stop         - Stop running container"
-	@echo "  make clean        - Remove container and image"
-	@echo "  make docs         - Generate PlantUML diagrams"
+	@echo "  make backend-shell        - Open shell in running container"
+	@echo "  make backend-logs         - View container logs"
+	@echo "  make backend-stop         - Stop running container"
+	@echo "  make backend-clean        - Remove container and image"
+	@echo "  make backend-docs         - Generate PlantUML diagrams"
+	@echo "  make release              - Create release: update version, commit, and tag (e.g., v2026.3.3)"
 	@echo ""
 	@echo "Environment variables:"
 	@echo "  KAFKA_BROKERS     - Kafka broker address (default: localhost:9092)"
 	@echo "  LOG_LEVEL         - Log level: trace, debug, info, warn, error (default: warn)"
 
-check:
+backend-check:
 	@echo "Checking if Redpanda is running..."
 	@docker ps --format '{{.Names}}\t{{.Status}}' | grep -q redpanda && echo "✅ Redpanda is running" || (echo "❌ Redpanda is not running" && echo "Start Redpanda: cd ../entitybase-backend && make api" && exit 1)
 
-test-local:
+release:
+	./scripts/shell/run-release.sh
+
+frontend-install:
+	cd frontend && npm install
+
+frontend-dev:
+	cd frontend && npm run dev
+
+frontend-build:
+	cd frontend && npm run build
+
+frontend-preview:
+	cd frontend && npm run preview
+
+frontend-test-run:
+	cd frontend && npm run test:run
+
+frontend-test:
+	cd frontend && npm run test:ui
+
+backend-test-local:
 	@echo "Installing dependencies..."
 	npm install
 	@echo "Running all tests..."
 	LOG_LEVEL=debug npm test
 
-test-unit:
+backend-test-unit:
 	@echo "Installing dependencies..."
 	npm install
 	@echo "Running unit tests (no Kafka required)..."
 	LOG_LEVEL=debug npx jest --verbose --forceExit --testPathIgnorePatterns="integration"
 
-docs:
+backend-docs:
 	./scripts/generate-diagrams.sh
 
-build:
-	@make stop || true
+backend-build:
+	@make backend-stop || true
 	docker build -t $(IMAGE_NAME) .
 
-run:
-	@make stop || true
-	@make check || exit 1
-	@make build || exit 1
+backend-run:
+	@make backend-stop || true
+	@make backend-check || exit 1
+	@make backend-build || exit 1
 	@docker run -d \
 		--name $(CONTAINER_NAME) \
 		--network host \
@@ -71,37 +101,37 @@ run:
 	@echo "   - Server: http://localhost:$(PORT)"
 	@echo "   - Docs:   http://localhost:$(PORT)/docs"
 
-test:
+backend-test:
 	@echo "Running tests requires Kafka broker at KAFKA_BROKERS"
 	@echo "Make sure Kafka/Redpanda is running at localhost:9092 or set KAFKA_BROKERS"
-	@echo "Or use 'make test-docker' to run tests with Kafka in Docker"
+	@echo "Or use 'make backend-test-docker' to run tests with Kafka in Docker"
 	docker run --rm --network host -e KAFKA_BROKERS=$(KAFKA_BROKERS) -e LOG_LEVEL=$(LOG_LEVEL) $(IMAGE_NAME) npm test
 
-coverage:
+backend-coverage:
 	@echo "Running tests with coverage requires Kafka broker at KAFKA_BROKERS"
 	@echo "Make sure Kafka/Redpanda is running at localhost:9092 or set KAFKA_BROKERS"
 	docker run --rm --network host -e KAFKA_BROKERS=$(KAFKA_BROKERS) -e LOG_LEVEL=$(LOG_LEVEL) $(IMAGE_NAME) npm run coverage
 
-test-docker:
-	@make check || exit 1
+backend-test-docker:
+	@make backend-check || exit 1
 	@echo "Running integration tests with Redpanda..."
 	LOG_LEVEL=debug ./test/docker-tests.sh
 
-coverage-docker:
-	@make check || exit 1
+backend-coverage-docker:
+	@make backend-check || exit 1
 	@echo "Running integration tests with coverage..."
 	LOG_LEVEL=debug ./test/docker-tests.sh coverage
 
-shell:
+backend-shell:
 	docker exec -it $(CONTAINER_NAME) /bin/sh
 
-logs:
+backend-logs:
 	docker logs -f $(CONTAINER_NAME)
 
-stop:
+backend-stop:
 	docker stop $(CONTAINER_NAME) 2>/dev/null || true
 	docker rm $(CONTAINER_NAME) 2>/dev/null || true
 
-clean: stop
+backend-clean: backend-stop
 	docker rm $(CONTAINER_NAME) 2>/dev/null || true
 	docker rmi $(IMAGE_NAME) 2>/dev/null || true

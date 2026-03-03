@@ -13,6 +13,7 @@ const port = 8081;
 const kafkaBroker = process.env.KAFKA_BROKERS || 'localhost:9092';
 
 const openApiSpec = yaml.parse(fs.readFileSync(path.join(__dirname, 'openapi.yaml'), 'utf8'));
+const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json'), 'utf8'));
 
 const swaggerHtml = `<!DOCTYPE html>
 <html lang="en">
@@ -84,6 +85,12 @@ function buildStreamSpec(topics) {
     return { paths };
 }
 
+function setCorsHeaders(res) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+}
+
 class KafkaSSEServer {
 
     constructor() {
@@ -91,9 +98,23 @@ class KafkaSSEServer {
         this.server.on('request', async (req, res) => {
             const url = req.url;
 
+            if (req.method === 'OPTIONS') {
+                setCorsHeaders(res);
+                res.writeHead(204);
+                res.end();
+                return;
+            }
+
             if (url === '/' || url === '') {
                 res.writeHead(302, { 'Location': '/docs' });
                 res.end();
+                return;
+            }
+
+            if (url === '/version') {
+                setCorsHeaders(res);
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ version: packageJson.version }));
                 return;
             }
 
@@ -110,6 +131,7 @@ class KafkaSSEServer {
             }
 
             if (url.startsWith('/v1/streams')) {
+                setCorsHeaders(res);
                 try {
                     const topics = await listTopics();
                     const urlObj = new URL(url, `http://localhost:${port}`);
@@ -129,6 +151,7 @@ class KafkaSSEServer {
             }
 
             if (url.startsWith('/v1/stream/')) {
+                setCorsHeaders(res);
                 const streamPath = url.replace('/v1/stream/', '');
                 const topics = streamPath.split(',');
                 log.info({ topics, url }, 'Handling SSE request');
