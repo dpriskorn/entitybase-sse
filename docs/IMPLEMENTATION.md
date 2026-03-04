@@ -50,18 +50,6 @@ Offset commits are not supported. Instead, subscription state is sent as the Eve
 
 Each SSE client gets its own consumer group named after the `x-request-id` header or a UUID.
 
-## Client Example
-
-```javascript
-const EventSource = require('eventsource');
-const url = `http://localhost:8081/your-topic`;
-let eventSource = new EventSource(url);
-
-eventSource.onmessage = function(event) {
-    console.log(JSON.parse(event.data));
-};
-```
-
 ## Errors
 
 Once SSE starts (HTTP 200 sent), errors are delivered as `onerror` events. Register an `onerror` handler to receive them.

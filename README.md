@@ -43,11 +43,19 @@ flowchart LR
 make backend-run
 
 # List available streams
-curl http://localhost:8081/v1/streams
+curl http://localhost:8888/v1/streams
 
 # Subscribe to a stream
-curl -N http://localhost:8081/v1/stream/your-topic
+curl -N http://localhost:8888/v1/stream/your-topic
+
+# Subscribe starting at specific partition/offset
+curl -N 'http://localhost:8888/v1/stream/your-topic?partition=0&offset=100'
+
+# Subscribe starting from a specific timestamp
+curl -N 'http://localhost:8888/v1/stream/your-topic?timestamp=1704067200000'
 ```
+
+> **Note:** This backend API is **not compatible** with the upstream [KafkaSSE](https://github.com/wikimedia/KafkaSSE) project. The API has been simplified for easier use.
 
 ### Frontend (Vue 3)
 
@@ -172,6 +180,6 @@ Thanks to the fantastic engineers at the [Wikimedia Foundation (WMF)](https://ww
 ## 📚 For Nerds
 
 - [Implementation Details](docs/IMPLEMENTATION.md) — Deep dive into how it works
-- [API Documentation](http://localhost:8081/docs) — OpenAPI specs (when running locally)
+- [API Documentation](http://localhost:8888/docs) — OpenAPI specs (when running locally)
 - [Architecture Diagram](docs/diagrams/architecture.png) — System architecture
 - [Sequence Diagrams](docs/diagrams/) — Connection and loop flows

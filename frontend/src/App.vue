@@ -11,6 +11,10 @@ const isPaused = ref(false)
 const error = ref('')
 const info = ref('')
 
+const partition = ref('')
+const offset = ref('')
+const timestamp = ref('')
+
 const rateCurrent = ref('..')
 const rateAverage = ref('..')
 
@@ -27,7 +31,13 @@ let isManualClose = false
 
 const streamUrl = computed(() => {
   if (!selectedStream.value) return ''
-  return `${backendUrl.value}/v1/stream/${selectedStream.value}`
+  let url = `${backendUrl.value}/v1/stream/${selectedStream.value}`
+  const params = []
+  if (partition.value) params.push(`partition=${partition.value}`)
+  if (offset.value) params.push(`offset=${offset.value}`)
+  if (timestamp.value) params.push(`timestamp=${timestamp.value}`)
+  if (params.length > 0) url += '?' + params.join('&')
+  return url
 })
 
 const formattedMessages = computed(() => {
@@ -228,6 +238,21 @@ onUnmounted(() => {
           </option>
         </select>
       </div>
+
+      <div class="control-group">
+        <label>Partition:</label>
+        <input v-model="partition" type="number" placeholder="0" min="0" />
+      </div>
+
+      <div class="control-group">
+        <label>Offset:</label>
+        <input v-model="offset" type="number" placeholder="start at latest" min="0" />
+      </div>
+
+      <div class="control-group">
+        <label>Timestamp:</label>
+        <input v-model="timestamp" type="number" placeholder="epoch ms" min="0" />
+      </div>
     </div>
 
     <div v-if="error" class="alert error">{{ error }}</div>
@@ -320,6 +345,14 @@ h1 {
   border-radius: 4px;
   font-size: 14px;
   min-width: 200px;
+}
+
+.control-group input[type="number"] {
+  padding: 6px 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  width: 100px;
 }
 
 .control-group button {

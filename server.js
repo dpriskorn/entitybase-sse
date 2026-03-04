@@ -47,50 +47,18 @@ const swaggerHtml = `<!DOCTYPE html>
 </html>`;
 
 async function listTopics() {
-    console.log(`!!! DDD listTopics START, broker=${kafkaBroker}`);
     log.debug('Fetching topic metadata from Kafka...');
     const kafka = new Kafka({
         clientId: 'kafkasse-admin',
         brokers: kafkaBroker.split(',').map(b => b.trim())
     });
-    console.log(`[listTopics] Kafka client created, brokers=${kafkaBroker}`);
     const admin = kafka.admin();
-    console.log(`[listTopics] Admin created, calling connect...`);
     await admin.connect();
-    console.log(`[listTopics] Admin connected, fetching metadata...`);
     const metadata = await admin.fetchTopicMetadata();
     await admin.disconnect();
     const topics = metadata.topics.map(t => t.name);
     log.debug({ topics }, 'Fetched topics from Kafka');
     return topics;
-}
-
-function buildStreamSpec(topics) {
-    const paths = {};
-    topics.forEach(topic => {
-        paths[`/v1/stream/${topic}`] = {
-            get: {
-                summary: `Stream from ${topic}`,
-                description: `Subscribe to Kafka topic: ${topic}`,
-                tags: ['streams'],
-                parameters: [
-                    {
-                        name: 'Last-Event-ID',
-                        in: 'header',
-                        description: 'Kafka partition/offset for resumption',
-                        schema: { type: 'array' }
-                    }
-                ],
-                responses: {
-                    '200': {
-                        description: 'SSE stream',
-                        content: { 'text/event-stream': { schema: { type: 'string' } } }
-                    }
-                }
-            }
-        };
-    });
-    return { paths };
 }
 
 function setCorsHeaders(res) {
@@ -148,23 +116,13 @@ class KafkaSSEServer {
             }
 
             if (url.startsWith('/v1/streams')) {
-                console.log(`[REQUEST] ${method} ${url} - processing streams request`);
                 setCorsHeaders(res);
                 try {
-                    console.log(`[REQUEST] ${method} ${url} - calling listTopics()`);
                     const topics = await listTopics();
-                    console.log(`[REQUEST] ${method} ${url} - got ${topics.length} topics`);
-                    const urlObj = new URL(url, `http://localhost:${port}`);
-                    if (urlObj.searchParams.has('spec')) {
-                        res.writeHead(200, { 'Content-Type': 'application/json' });
-                        res.end(JSON.stringify(buildStreamSpec(topics), null, 2));
-                    } else {
-                        res.writeHead(200, { 'Content-Type': 'application/json' });
-                        res.end(JSON.stringify({ streams: topics }));
-                    }
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ streams: topics }));
                 } catch (err) {
-                    console.error(`[ERROR] ${method} ${url} - Error listing topics:`, err.message, err.stack);
-                    log.error({ method, url, err: err.message, stack: err.stack }, 'Error listing topics');
+                    log.error({ method, url, err: err.message }, 'Error listing topics');
                     res.writeHead(500, { 'Content-Type': 'application/json' });
                     res.end(JSON.stringify({ error: err.message }));
                 }
@@ -173,14 +131,30 @@ class KafkaSSEServer {
 
             if (url.startsWith('/v1/stream/')) {
                 const streamPath = url.replace('/v1/stream/', '');
-                const topics = streamPath.split(',');
-                log.info({ topics, url }, 'Handling SSE request');
+                const [topicPart] = streamPath.split('?');
+                const topics = topicPart.split(',');
+                
+                const urlObj = new URL(url, `http://localhost:${port}`);
+                const partition = urlObj.searchParams.get('partition');
+                const offset = urlObj.searchParams.get('offset');
+                const timestamp = urlObj.searchParams.get('timestamp');
+                
+                let assignments = topics;
+                if (partition !== null && offset !== null) {
+                    assignments = topics.map(t => ({
+                        topic: t,
+                        partition: parseInt(partition, 10),
+                        offset: parseInt(offset, 10)
+                    }));
+                }
+                
+                log.info({ topics, assignments, partition, offset, timestamp }, 'Handling SSE request');
                 setCorsHeaders(res);
                 const options = {
                     kafkaConfig: { 'metadata.broker.list': kafkaBroker },
                     useTimestampForId: true
                 };
-                kafkaSseHandler(req, res, topics, options);
+                kafkaSseHandler(req, res, assignments, options, timestamp ? parseInt(timestamp, 10) : null);
                 return;
             }
 
