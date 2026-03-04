@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 
-const backendUrl = ref('http://162.19.226.24:8081')
+const backendUrl = ref('http://localhost:8888')
 const version = ref('')
 const streams = ref([])
 const selectedStream = ref('')
@@ -81,7 +81,7 @@ function connectToStream() {
   messageCount = 0
   totalMessages = 0
   lastCheck = Date.now()
-  info.value = `Connecting to ${streamUrl.value}...`
+  info.value = 'Connecting...'
   error.value = ''
 
   eventSource = new EventSource(streamUrl.value)
