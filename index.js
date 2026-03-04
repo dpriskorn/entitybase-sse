@@ -1,6 +1,7 @@
 'use strict';
 
-const KafkaSSE     = require('./lib/KafkaSSE');
+const KafkaSSE = require('./lib/KafkaSSE');
+const log = require('./lib/logger');
 
 /**
  * Connects an HTTP request and response to a Kafka Consumer,
@@ -47,6 +48,10 @@ const KafkaSSE     = require('./lib/KafkaSSE');
  *                              offsets will be queryed for the offset atTimestamp.
  */
 module.exports = function(req, res, assignments, options, atTimestamp) {
+    const kafkaConfig = options?.kafkaConfig || {};
+    const brokers = kafkaConfig['metadata.broker.list'] || 'unknown';
+    log.info({ url: req.url, assignments, brokers }, 'kafkaSseHandler called');
+
     const kafkaSSE = new KafkaSSE(req, res, options);
     return kafkaSSE.connect(assignments, atTimestamp);
 };
