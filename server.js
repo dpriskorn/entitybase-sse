@@ -172,13 +172,17 @@ class KafkaSSEServer {
             }
 
             if (url.startsWith('/v1/stream/')) {
-                setCorsHeaders(res);
                 const streamPath = url.replace('/v1/stream/', '');
                 const topics = streamPath.split(',');
                 log.info({ topics, url }, 'Handling SSE request');
                 const options = {
                     kafkaConfig: { 'metadata.broker.list': kafkaBroker },
-                    useTimestampForId: true
+                    useTimestampForId: true,
+                    headers: {
+                        'Access-Control-Allow-Origin': '*',
+                        'Access-Control-Allow-Methods': 'GET, OPTIONS',
+                        'Access-Control-Allow-Headers': 'Content-Type'
+                    }
                 };
                 kafkaSseHandler(req, res, topics, options);
                 return;
