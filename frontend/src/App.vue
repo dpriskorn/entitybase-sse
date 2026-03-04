@@ -16,9 +16,14 @@ const rateAverage = ref('..')
 
 let eventSource = null
 let freqChecker = null
+let reconnectTimeout = null
+let reconnectAttempts = 0
+const MAX_RECONNECT_ATTEMPTS = 10
+const INITIAL_RECONNECT_DELAY = 1000
 let messageCount = 0
 let totalMessages = 0
 let lastCheck = Date.now()
+let isManualClose = false
 
 const streamUrl = computed(() => {
   if (!selectedStream.value) return ''
@@ -83,11 +88,14 @@ function connectToStream() {
   lastCheck = Date.now()
   info.value = 'Connecting...'
   error.value = ''
+  isManualClose = false
+  reconnectAttempts = 0
 
   eventSource = new EventSource(streamUrl.value)
 
   eventSource.onopen = () => {
     info.value = 'Connected'
+    reconnectAttempts = 0
     startRateChecker()
   }
 
@@ -106,7 +114,27 @@ function connectToStream() {
     error.value = 'Connection error'
     info.value = ''
     stopRateChecker()
+    attemptReconnect()
   }
+}
+
+function attemptReconnect() {
+  if (isManualClose || reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+    if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+      error.value = `Failed to reconnect after ${MAX_RECONNECT_ATTEMPTS} attempts. Please reconnect manually.`
+    }
+    return
+  }
+
+  const delay = Math.min(INITIAL_RECONNECT_DELAY * Math.pow(2, reconnectAttempts), 30000)
+  reconnectAttempts++
+  info.value = `Reconnecting in ${delay / 1000}s... (attempt ${reconnectAttempts})`
+
+  reconnectTimeout = setTimeout(() => {
+    if (!isManualClose && selectedStream.value) {
+      connectToStream()
+    }
+  }, delay)
 }
 
 function startRateChecker() {
@@ -148,8 +176,16 @@ function clearMessages() {
   messages.value = []
 }
 
+function manualReconnect() {
+  if (reconnectTimeout) clearTimeout(reconnectTimeout)
+  isManualClose = false
+  reconnectAttempts = 0
+  connectToStream()
+}
+
 watch(selectedStream, () => {
   if (selectedStream.value) {
+    isManualClose = false
     connectToStream()
   }
 })
@@ -165,6 +201,8 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  isManualClose = true
+  if (reconnectTimeout) clearTimeout(reconnectTimeout)
   if (eventSource) eventSource.close()
   stopRateChecker()
 })
@@ -211,6 +249,7 @@ onUnmounted(() => {
       </label>
       <button @click="copyMessages">Copy</button>
       <button @click="clearMessages">Clear</button>
+      <button @click="manualReconnect">Reconnect</button>
     </div>
 
     <pre class="feed"><code v-for="(msg, i) in formattedMessages" :key="i">{{ msg }}
