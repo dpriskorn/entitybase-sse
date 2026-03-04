@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
-  title: KafkaSSE API
-  description: Kafka Consumer to HTTP SSE/EventSource. Streams JSON messages from Kafka topics to clients over HTTP in SSE format.
+  title: Entitybase-SSE API
+  description: Kafka/Redpanda Consumer to HTTP Server-Sent Events (SSE). Streams JSON messages from Kafka topics to clients over HTTP in SSE format.
   version: 0.5.0
 paths:
   /v1/streams:

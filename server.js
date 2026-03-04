@@ -49,7 +49,7 @@ const swaggerHtml = `<!DOCTYPE html>
 async function listTopics() {
     log.debug('Fetching topic metadata from Kafka...');
     const kafka = new Kafka({
-        clientId: 'kafkasse-admin',
+        clientId: 'entitybase-sse-admin',
         brokers: kafkaBroker.split(',').map(b => b.trim())
     });
     const admin = kafka.admin();
