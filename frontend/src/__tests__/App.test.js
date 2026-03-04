@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import App from '../App.vue'
 
@@ -34,7 +34,7 @@ describe('App.vue', () => {
 
   it('has pause checkbox', () => {
     const checkboxes = wrapper.findAll('input[type="checkbox"]')
-    const pauseCheckbox = checkboxes.find(cb => 
+    const pauseCheckbox = checkboxes.find(() => 
       wrapper.html().includes('Pause')
     )
     expect(pauseCheckbox.exists()).toBe(true)

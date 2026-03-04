@@ -1,4 +1,4 @@
-.PHONY: help backend-build backend-run backend-test backend-test-local backend-test-unit backend-test-docker backend-coverage backend-stop backend-clean backend-shell backend-logs backend-docs backend-check release frontend-install frontend-dev frontend-build frontend-preview frontend-test frontend-test-run
+.PHONY: help backend-build backend-run backend-test backend-test-local backend-test-unit backend-test-docker backend-coverage backend-stop backend-clean backend-shell backend-logs backend-docs backend-check release frontend-install frontend-dev frontend-build frontend-preview frontend-test frontend-test-run frontend-lint
 
 IMAGE_NAME=entitybase-sse
 CONTAINER_NAME=entitybase-sse
@@ -15,6 +15,7 @@ help:
 	@echo "  make frontend-serve       - Build and serve frontend on port 8082"
 	@echo "  make frontend-preview     - Preview built frontend"
 	@echo "  make frontend-test-run    - Run frontend tests"
+	@echo "  make frontend-lint       - Run frontend linter"
 	@echo "  make frontend-test        - Run frontend tests with UI"
 	@echo ""
 	@echo "Backend targets (Docker/Kafka required):"
@@ -66,6 +67,9 @@ frontend-serve:
 
 frontend-test-run:
 	cd frontend && npm run test:run
+
+frontend-lint:
+	cd frontend && npm run lint
 
 frontend-test:
 	cd frontend && npm run test:ui

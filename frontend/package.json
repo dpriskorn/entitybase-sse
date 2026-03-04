@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "serve": "serve -s dist -l 8082",
+    "lint": "eslint src --ext .vue,.js",
     "test": "vitest",
     "test:run": "vitest run",
     "test:ui": "vitest --ui"
@@ -19,6 +20,8 @@
     "@vitejs/plugin-vue": "^6.0.2",
     "@vitest/ui": "^4.0.18",
     "@vue/test-utils": "^2.4.6",
+    "eslint": "^9.0.0",
+    "eslint-plugin-vue": "^9.0.0",
     "jsdom": "^28.1.0",
     "serve": "^14.2.6",
     "vite": "^7.3.1",

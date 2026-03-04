@@ -61,7 +61,7 @@ async function fetchVersion() {
     const res = await fetch(`${backendUrl.value}/version`)
     const data = await res.json()
     version.value = data.version || ''
-  } catch (e) {
+  } catch {
     version.value = ''
   }
 }
@@ -129,10 +129,6 @@ function stopRateChecker() {
     clearInterval(freqChecker)
     freqChecker = null
   }
-}
-
-function togglePause() {
-  isPaused.value = !isPaused.value
 }
 
 async function copyMessages() {
