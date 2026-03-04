@@ -9,7 +9,7 @@ const { Kafka } = require('kafkajs');
 const kafkaSseHandler = require('./index');
 const log = require('./lib/logger');
 
-const port = 8081;
+const port = 8888;
 const kafkaBroker = process.env.KAFKA_BROKERS || 'localhost:9092';
 const logLevel = process.env.LOG_LEVEL || 'debug';
 

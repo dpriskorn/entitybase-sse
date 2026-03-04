@@ -2,7 +2,7 @@
 
 IMAGE_NAME=entitybase-sse
 CONTAINER_NAME=entitybase-sse
-PORT=8081
+PORT=8888
 KAFKA_BROKERS?=localhost:9092
 
 help:
