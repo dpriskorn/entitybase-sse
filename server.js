@@ -11,6 +11,10 @@ const log = require('./lib/logger');
 
 const port = 8081;
 const kafkaBroker = process.env.KAFKA_BROKERS || 'localhost:9092';
+const logLevel = process.env.LOG_LEVEL || 'debug';
+
+log.setLevel(logLevel);
+log.info(`Starting SSE server, LOG_LEVEL=${logLevel}, KAFKA_BROKERS=${kafkaBroker}`);
 
 const openApiSpec = yaml.parse(fs.readFileSync(path.join(__dirname, 'openapi.yaml'), 'utf8'));
 const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json'), 'utf8'));
@@ -43,13 +47,17 @@ const swaggerHtml = `<!DOCTYPE html>
 </html>`;
 
 async function listTopics() {
+    console.log(`!!! DDD listTopics START, broker=${kafkaBroker}`);
     log.debug('Fetching topic metadata from Kafka...');
     const kafka = new Kafka({
         clientId: 'kafkasse-admin',
         brokers: kafkaBroker.split(',').map(b => b.trim())
     });
+    console.log(`[listTopics] Kafka client created, brokers=${kafkaBroker}`);
     const admin = kafka.admin();
+    console.log(`[listTopics] Admin created, calling connect...`);
     await admin.connect();
+    console.log(`[listTopics] Admin connected, fetching metadata...`);
     const metadata = await admin.fetchTopicMetadata();
     await admin.disconnect();
     const topics = metadata.topics.map(t => t.name);
@@ -97,6 +105,9 @@ class KafkaSSEServer {
         this.server = http.createServer();
         this.server.on('request', async (req, res) => {
             const url = req.url;
+            const method = req.method;
+
+            log.info({ method, url }, 'Incoming request');
 
             if (req.method === 'OPTIONS') {
                 setCorsHeaders(res);
@@ -118,6 +129,12 @@ class KafkaSSEServer {
                 return;
             }
 
+            if (url === '/health') {
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ status: 'healthy' }));
+                return;
+            }
+
             if (url === '/docs' || url === '/docs/') {
                 res.writeHead(200, { 'Content-Type': 'text/html' });
                 res.end(swaggerHtml);
@@ -131,9 +148,12 @@ class KafkaSSEServer {
             }
 
             if (url.startsWith('/v1/streams')) {
+                console.log(`[REQUEST] ${method} ${url} - processing streams request`);
                 setCorsHeaders(res);
                 try {
+                    console.log(`[REQUEST] ${method} ${url} - calling listTopics()`);
                     const topics = await listTopics();
+                    console.log(`[REQUEST] ${method} ${url} - got ${topics.length} topics`);
                     const urlObj = new URL(url, `http://localhost:${port}`);
                     if (urlObj.searchParams.has('spec')) {
                         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -143,7 +163,8 @@ class KafkaSSEServer {
                         res.end(JSON.stringify({ streams: topics }));
                     }
                 } catch (err) {
-                    console.error('Error listing topics:', err.message);
+                    console.error(`[ERROR] ${method} ${url} - Error listing topics:`, err.message, err.stack);
+                    log.error({ method, url, err: err.message, stack: err.stack }, 'Error listing topics');
                     res.writeHead(500, { 'Content-Type': 'application/json' });
                     res.end(JSON.stringify({ error: err.message }));
                 }
@@ -171,8 +192,8 @@ class KafkaSSEServer {
 
     listen() {
         this.server.listen(port, '0.0.0.0');
-        console.log(`Listening for HTTP SSE connections on port ${port}`);
-        console.log(`API docs available at http://localhost:${port}/docs`);
+        log.info(`Listening for HTTP SSE connections on port ${port}`);
+        log.info(`API docs available at http://localhost:${port}/docs`);
     }
 }
 
