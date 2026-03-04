@@ -2,9 +2,9 @@
 set -e
 
 APP_NETWORK="kafka_net"
-APP_NAME="testkafkasse"
+APP_NAME="entitybase-sse-test"
 DOCKER_COMPOSE_CMD="docker-compose -p ${APP_NAME}"
-IMAGE_NAME="testkafkasse"
+IMAGE_NAME="entitybase-sse-test"
 REDPANDA_CONTAINER="${APP_NAME}-redpanda-1"
 TEST_TYPE="${1:-test}"
 
